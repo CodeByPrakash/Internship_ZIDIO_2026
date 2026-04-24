@@ -76,7 +76,7 @@ output- {"success":true,"total":1,"page":1,"pages":1,"meetings":[{"recording":{"
 
 # get meeting by id
 # First call — cache MISS (check server logs)
-curl http://localhost:5000/api/meetings/69eb67d74af74372c312efc4 ^
+curl http://localhost:5000/api/meetings/MEETING_ID_HERE ^
   -H "Authorization: Bearer YOUR_TOKEN"
 
 # Second call — cache HIT ({"fromCache":true} in response)
