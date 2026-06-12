@@ -30,6 +30,9 @@ export interface IMeeting extends Document {
     isRecorded: boolean;
     recording?: IRecording;
     agenda?: string;
+    transcript?: string;
+    aiSummary?: string;
+    actionItems?: { text: string; assignee: string; dueDate: string; status: string }[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -104,11 +107,27 @@ const MeetingSchema = new Schema<IMeeting>(
             maxlength: [2000, 'Agenda cannot exceed 2000 characters'],
             default: '',
         },
+        transcript: {
+            type: String,
+            default: '',
+        },
+        aiSummary: {
+            type: String,
+            default: '',
+        },
+        actionItems: [
+            {
+                text: String,
+                assignee: String,
+                dueDate: String,
+                status: { type: String, enum: ['pending', 'completed'], default: 'pending' },
+            },
+        ],
     },
     {
         timestamps: true,
         toJSON: {
-            transform: (_doc, ret) => {
+            transform: (_doc: any, ret: any) => {
                 delete ret.__v;
                 return ret;
             },

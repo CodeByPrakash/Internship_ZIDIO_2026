@@ -16,6 +16,10 @@ import { apiLimiter } from './middleware/rateLimit.middleware';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import meetingRoutes from './routes/meeting.routes';
+import chatRoutes from './routes/chat.routes';
+import notificationRoutes from './routes/notification.routes';
+import aiRoutes from './routes/ai.routes';
+import workspaceRoutes from './routes/workspace.routes';
 import { notFound, errorHandler } from './middleware/error.middleware';
 
 const app = express();
@@ -54,6 +58,10 @@ app.use('/api', apiLimiter);          // Global 100 req/15min
 app.use('/api/auth', authRoutes);     // auth limiter applied per-route inside
 app.use('/api/users', userRoutes);
 app.use('/api/meetings', meetingRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/ai', aiRoutes);
+app.use('/api/workspaces', workspaceRoutes);
 
 // ─── 404 & Error Handlers ────────────────────────────────────────────────────
 

@@ -2,44 +2,79 @@ import Redis from 'ioredis';
 import { env } from './env';
 import logger from '../utils/logger';
 
-const createRedisClient = () => {
-    const client = new Redis(env.REDIS_URL, {
+// Track whether Redis is available
+export let redisAvailable = false;
+
+const createRedisClient = (label = 'redis') => {
+    const client = new Redis(env.REDIS_URL || 'redis://localhost:6379', {
         maxRetriesPerRequest: null,
         lazyConnect: true,
         retryStrategy: (times) => {
-            if (times > 10) {
-                logger.error('Redis: max retries reached');
-                return null; // Stop retrying
+            if (times > 3) {
+                logger.error(`${label}: max retries reached — giving up`);
+                return null;
             }
-            const delay = Math.min(times * 200, 3000);
-            logger.warn(`Redis: retrying in ${delay}ms (attempt ${times})`);
-            return delay;
+            return Math.min(times * 200, 2000);
         },
     });
 
-    client.on('connect', () => logger.info('✅ Redis connected'));
-    client.on('ready', () => logger.info('⚡ Redis ready'));
-    client.on('error', (err) => logger.error(`❌ Redis error: ${err.message}`));
-    client.on('close', () => logger.warn('⚠️  Redis connection closed'));
-    client.on('reconnecting', () => logger.info('🔄 Redis reconnecting...'));
-
+    client.on('error', () => {}); // Suppress unhandled error events
     return client;
 };
 
-// Main client for cache operations
-const redisClient = createRedisClient();
-
-// Separate pub/sub clients for Socket.io adapter (must not share connection)
-const pubClient = createRedisClient();
-const subClient = createRedisClient();
+// These are created lazily only when Redis is enabled
+let _redisClient: Redis | null = null;
+let _pubClient: Redis | null = null;
+let _subClient: Redis | null = null;
 
 export const connectRedis = async (): Promise<void> => {
-    await Promise.all([
-        redisClient.connect(),
-        pubClient.connect(),
-        subClient.connect(),
-    ]);
+    if (!env.REDIS_URL) {
+        logger.warn('⚠️  REDIS_URL not set — running without Redis (no caching, single-instance sockets)');
+        return;
+    }
+
+    try {
+        _redisClient = createRedisClient('cache');
+        _pubClient = createRedisClient('pub');
+        _subClient = createRedisClient('sub');
+
+        await Promise.all([
+            _redisClient.connect(),
+            _pubClient.connect(),
+            _subClient.connect(),
+        ]);
+        redisAvailable = true;
+        logger.info('✅ All Redis connections established');
+    } catch (err) {
+        logger.warn(`⚠️  Redis connection failed — running without Redis: ${err}`);
+        redisAvailable = false;
+        try { _redisClient?.disconnect(); } catch {}
+        try { _pubClient?.disconnect(); } catch {}
+        try { _subClient?.disconnect(); } catch {}
+        _redisClient = null;
+        _pubClient = null;
+        _subClient = null;
+    }
 };
 
-export { pubClient, subClient };
-export default redisClient;
+// Safe getters — return null when Redis unavailable
+export const getRedisClient = () => _redisClient;
+export const pubClient = _pubClient;
+export const subClient = _subClient;
+
+// Default export — provides a safe wrapper that no-ops when Redis is unavailable
+const noopClient = {
+    get: async () => null,
+    setex: async () => 'OK',
+    del: async () => 0,
+    keys: async () => [] as string[],
+} as unknown as Redis;
+
+export default new Proxy(noopClient, {
+    get(_target, prop) {
+        if (_redisClient && redisAvailable) {
+            return (_redisClient as any)[prop];
+        }
+        return (noopClient as any)[prop];
+    },
+});

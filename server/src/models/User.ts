@@ -69,7 +69,7 @@ const UserSchema = new Schema<IUser>(
     {
         timestamps: true,
         toJSON: {
-            transform: (_doc, ret) => {
+            transform: (_doc: any, ret: any) => {
                 delete ret.password;
                 delete ret.refreshToken;
                 delete ret.cloudinaryPublicId;

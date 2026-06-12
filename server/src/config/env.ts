@@ -28,7 +28,7 @@ export const env = {
     COOKIE_SECRET: process.env.COOKIE_SECRET || 'fallback_cookie_secret',
 
     // Redis
-    REDIS_URL: process.env.REDIS_URL || 'redis://localhost:6379',
+    REDIS_URL: getOptionalEnv('REDIS_URL'),
 
     // Cloudinary (optional in dev — avatar upload disabled if not set)
     CLOUDINARY_CLOUD_NAME: getOptionalEnv('CLOUDINARY_CLOUD_NAME'),

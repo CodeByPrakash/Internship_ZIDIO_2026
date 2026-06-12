@@ -1,15 +1,16 @@
 import http from 'http';
 import { Server } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';
-import { pubClient, subClient } from './redis';
+import { redisAvailable, getRedisClient } from './redis';
 import { verifyAccessToken } from '../utils/jwt';
 import { registerMeetingSocketHandlers } from '../sockets/meeting.socket';
+import { registerChatSocketHandlers } from '../sockets/chat.socket';
+import { registerNotificationSocketHandlers } from '../sockets/notification.socket';
 import { env } from './env';
 import logger from '../utils/logger';
 
 /**
  * createSocketServer — attaches Socket.io to an http.Server
- * Returns the io instance for use elsewhere (e.g. emitting from controllers)
  */
 export const createSocketServer = (httpServer: http.Server): Server => {
     const io = new Server(httpServer, {
@@ -22,35 +23,24 @@ export const createSocketServer = (httpServer: http.Server): Server => {
         pingInterval: 25000,
     });
 
-    // ─── Redis Adapter (horizontal scaling) ────────────────────────────────────
-    io.adapter(createAdapter(pubClient, subClient));
-    logger.info('⚡ Socket.io Redis adapter attached');
+    // ─── Redis Adapter (only if Redis is connected) ──────────────────────────
+    if (redisAvailable) {
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-var-requires
+            const redis = require('./redis');
+            if (redis.pubClient && redis.subClient) {
+                io.adapter(createAdapter(redis.pubClient, redis.subClient));
+                logger.info('Socket.io Redis adapter attached');
+            }
+        } catch {
+            logger.warn('Socket.io Redis adapter failed — single-instance mode');
+        }
+    } else {
+        logger.warn('Socket.io running without Redis adapter (single-instance mode)');
+    }
 
     // ─── JWT Auth Middleware ───────────────────────────────────────────────────
-    io.use((socket, next) => {
-        const token =
-            (socket.handshake.auth?.token as string) ||
-            (socket.handshake.headers?.authorization?.split(' ')[1] ?? '');
-
-        if (!token) {
-            return next(new Error('Authentication error: no token'));
-        }
-
-        try {
-            const decoded = verifyAccessToken(token);
-            socket.data.userId = decoded.userId;
-            socket.data.role = decoded.role;
-            next();
-        } catch {
-            next(new Error('Authentication error: invalid token'));
-        }
-    });
-
-    // ─── /meeting Namespace ────────────────────────────────────────────────────
-    const meetingNs = io.of('/meeting');
-
-    // Apply same JWT middleware to namespace
-    meetingNs.use((socket, next) => {
+    const authMiddleware = (socket: any, next: any) => {
         const token =
             (socket.handshake.auth?.token as string) ||
             (socket.handshake.headers?.authorization?.split(' ')[1] ?? '');
@@ -65,37 +55,34 @@ export const createSocketServer = (httpServer: http.Server): Server => {
         } catch {
             next(new Error('Authentication error: invalid token'));
         }
-    });
+    };
+
+    // Apply auth to default namespace
+    io.use(authMiddleware);
+
+    // ─── /meeting Namespace ────────────────────────────────────────────────────
+    const meetingNs = io.of('/meeting');
+    meetingNs.use(authMiddleware);
 
     meetingNs.on('connection', (socket) => {
         logger.info(`🎥 Meeting socket connected: ${socket.id} (user: ${socket.data.userId})`);
         registerMeetingSocketHandlers(io as unknown as Server, socket);
+        registerChatSocketHandlers(socket);
 
         socket.on('disconnect', (reason) => {
             logger.info(`🔌 Meeting socket disconnected: ${socket.id} — ${reason}`);
         });
     });
 
-    // ─── /notification Namespace (Day 6 placeholder) ───────────────────────────
+    // ─── /notification Namespace ───────────────────────────────────────────────
     const notifNs = io.of('/notification');
-
-    notifNs.use((socket, next) => {
-        const token = socket.handshake.auth?.token as string;
-        if (!token) return next(new Error('Authentication error: no token'));
-        try {
-            const decoded = verifyAccessToken(token);
-            socket.data.userId = decoded.userId;
-            next();
-        } catch {
-            next(new Error('Authentication error: invalid token'));
-        }
-    });
+    notifNs.use(authMiddleware);
 
     notifNs.on('connection', (socket) => {
-        logger.info(`🔔 Notification socket connected: ${socket.id} (user: ${socket.data.userId})`);
-        // Day 6: real-time notification events go here
+        logger.info(`Notification socket connected: ${socket.id} (user: ${socket.data.userId})`);
+        registerNotificationSocketHandlers(io as unknown as Server, socket);
     });
 
-    logger.info('✅ Socket.io server configured with /meeting and /notification namespaces');
+    logger.info('Socket.io server configured with /meeting and /notification namespaces');
     return io;
 };

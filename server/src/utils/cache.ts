@@ -1,4 +1,4 @@
-import redisClient from '../config/redis';
+import redisClient, { redisAvailable } from '../config/redis';
 import logger from './logger';
 
 const DEFAULT_TTL = 300; // 5 minutes
