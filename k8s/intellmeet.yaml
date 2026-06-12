@@ -1,0 +1,172 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: intellmeet-server
+  labels:
+    app: intellmeet-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: intellmeet-server
+  template:
+    metadata:
+      labels:
+        app: intellmeet-server
+    spec:
+      containers:
+        - name: server
+          image: intellmeet-server:latest
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - configMapRef:
+                name: intellmeet-config
+            - secretRef:
+                name: intellmeet-secrets
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: intellmeet-server
+spec:
+  selector:
+    app: intellmeet-server
+  ports:
+    - port: 5000
+      targetPort: 5000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: intellmeet-client
+  labels:
+    app: intellmeet-client
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: intellmeet-client
+  template:
+    metadata:
+      labels:
+        app: intellmeet-client
+    spec:
+      containers:
+        - name: client
+          image: intellmeet-client:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: intellmeet-client
+spec:
+  selector:
+    app: intellmeet-client
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: intellmeet-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/websocket-services: intellmeet-server
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: intellmeet.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: intellmeet-server
+                port:
+                  number: 5000
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: intellmeet-server
+                port:
+                  number: 5000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: intellmeet-client
+                port:
+                  number: 80
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: intellmeet-server-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: intellmeet-server
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: intellmeet-config
+data:
+  NODE_ENV: "production"
+  PORT: "5000"
+  CLIENT_URL: "https://intellmeet.example.com"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: intellmeet-secrets
+type: Opaque
+stringData:
+  MONGO_URI: "mongodb://mongo:27017/intellmeet"
+  REDIS_URL: "redis://redis:6379"
+  JWT_SECRET: "change-me-in-production"
+  JWT_REFRESH_SECRET: "change-me-in-production-refresh"
