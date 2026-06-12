@@ -1,35 +1,18 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './store/auth.store';
 
-// Lazy-loaded pages (will be built out day by day)
-const Home = () => (
-    <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent mb-4">
-                IntellMeet
-            </h1>
-            <p className="text-slate-400 text-lg">AI-Powered Enterprise Meetings</p>
-        </div>
-    </div>
-);
-
-const Login = () => (
-    <div className="flex min-h-screen items-center justify-center">
-        <p className="text-slate-400">Login page — coming in Day 3 UI</p>
-    </div>
-);
-
-const Signup = () => (
-    <div className="flex min-h-screen items-center justify-center">
-        <p className="text-slate-400">Signup page — coming in Day 3 UI</p>
-    </div>
-);
-
-const Dashboard = () => (
-    <div className="flex min-h-screen items-center justify-center">
-        <p className="text-slate-400">Dashboard — coming in Day 5</p>
-    </div>
-);
+// Pages
+import Home from './pages/Home';
+import Login from './pages/auth/Login';
+import Signup from './pages/auth/Signup';
+import Dashboard from './pages/dashboard/Dashboard';
+import MeetingRoom from './pages/meeting/MeetingRoom';
+import MeetingSummary from './pages/post-meeting/MeetingSummary';
+import ProfilePage from './pages/profile/ProfilePage';
+import KanbanBoard from './pages/workspace/KanbanBoard';
+import AnalyticsDashboard from './pages/analytics/AnalyticsDashboard';
+import AppShell from './components/layout/AppShell';
 
 // Protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -37,22 +20,51 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
+// Redirect if already logged in
+const GuestRoute = ({ children }: { children: React.ReactNode }) => {
+    const isAuthenticated = useAuthStore((s) => !!s.accessToken);
+    return isAuthenticated ? <Navigate to="/dashboard" replace /> : <>{children}</>;
+};
+
 function App() {
     return (
-        <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route
-                path="/dashboard"
-                element={
-                    <ProtectedRoute>
-                        <Dashboard />
-                    </ProtectedRoute>
-                }
+        <>
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    duration: 3000,
+                    style: {
+                        background: '#1a1a2e',
+                        color: '#e2e8f0',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '0.75rem',
+                        fontSize: '0.875rem',
+                    },
+                }}
             />
-            <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            <Routes>
+                {/* Public */}
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
+                <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
+
+                {/* Meeting Room (full screen, no shell) */}
+                <Route path="/meeting/:roomId" element={<ProtectedRoute><MeetingRoom /></ProtectedRoute>} />
+
+                {/* App Shell (sidebar + topbar) */}
+                <Route element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/meetings" element={<Dashboard />} />
+                    <Route path="/meetings/:id/summary" element={<MeetingSummary />} />
+                    <Route path="/workspaces" element={<KanbanBoard />} />
+                    <Route path="/analytics" element={<AnalyticsDashboard />} />
+                    <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/notifications" element={<div style={{ color: 'var(--color-text-secondary)' }}>Notifications — coming soon</div>} />
+                </Route>
+
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+        </>
     );
 }
 
