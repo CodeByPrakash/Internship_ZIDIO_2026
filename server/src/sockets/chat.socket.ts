@@ -1,5 +1,5 @@
 import { Socket } from 'socket.io';
-import Message from '../models/Message';
+import prisma from '../config/prisma';
 import logger from '../utils/logger';
 
 export const registerChatSocketHandlers = (socket: Socket): void => {
@@ -7,18 +7,28 @@ export const registerChatSocketHandlers = (socket: Socket): void => {
 
     socket.on('send-message', async (data: { meetingId: string; content: string; type?: string }) => {
         try {
-            const message = await Message.create({
-                meeting: data.meetingId,
-                sender: userId,
-                content: data.content,
-                type: data.type || 'text',
+            // Find meeting by id or roomId
+            const meeting = await prisma.meeting.findFirst({
+                where: { OR: [{ id: data.meetingId }, { roomId: data.meetingId }] },
             });
 
-            const populated = await message.populate('sender', 'name avatar');
+            if (!meeting) return;
+
+            const message = await prisma.message.create({
+                data: {
+                    meetingId: meeting.id,
+                    senderId: userId,
+                    content: data.content,
+                    type: data.type || 'text',
+                },
+                include: {
+                    sender: { select: { id: true, name: true, avatar: true } },
+                },
+            });
 
             // Broadcast to room
-            socket.to(data.meetingId).emit('new-message', populated);
-            socket.emit('new-message', populated);
+            socket.to(data.meetingId).emit('new-message', message);
+            socket.emit('new-message', message);
         } catch (err) {
             logger.error(`Chat message save failed: ${err}`);
         }
@@ -30,15 +40,5 @@ export const registerChatSocketHandlers = (socket: Socket): void => {
 
     socket.on('typing-stop', (roomId: string) => {
         socket.to(roomId).emit('typing-stop', { userId, socketId: socket.id });
-    });
-
-    socket.on('message-read', async (data: { messageId: string }) => {
-        try {
-            await Message.findByIdAndUpdate(data.messageId, {
-                $addToSet: { readBy: { user: userId, readAt: new Date() } },
-            });
-        } catch (err) {
-            logger.error(`Read receipt failed: ${err}`);
-        }
     });
 };

@@ -12,7 +12,9 @@ import MeetingSummary from './pages/post-meeting/MeetingSummary';
 import ProfilePage from './pages/profile/ProfilePage';
 import KanbanBoard from './pages/workspace/KanbanBoard';
 import AnalyticsDashboard from './pages/analytics/AnalyticsDashboard';
+import NotificationsPage from './pages/notifications/NotificationsPage';
 import AppShell from './components/layout/AppShell';
+import { MotionProvider } from './components/motion/MotionProvider';
 
 // Protected route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -28,6 +30,7 @@ const GuestRoute = ({ children }: { children: React.ReactNode }) => {
 
 function App() {
     return (
+        <MotionProvider>
         <>
             <Toaster
                 position="top-right"
@@ -59,12 +62,13 @@ function App() {
                     <Route path="/workspaces" element={<KanbanBoard />} />
                     <Route path="/analytics" element={<AnalyticsDashboard />} />
                     <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/notifications" element={<div style={{ color: 'var(--color-text-secondary)' }}>Notifications — coming soon</div>} />
+                    <Route path="/notifications" element={<NotificationsPage />} />
                 </Route>
 
                 <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
         </>
+        </MotionProvider>
     );
 }
 

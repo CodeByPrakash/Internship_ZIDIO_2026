@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
-import User from '../models/User';
+import prisma from '../config/prisma';
 import {
     generateAccessToken,
     generateRefreshToken,
@@ -26,29 +26,53 @@ export const signup = async (
         const { name, email, password } = req.body;
 
         // Check for existing user
-        const existing = await User.findOne({ email });
+        const existing = await prisma.user.findUnique({ where: { email } });
         if (existing) {
             res.status(409).json({ success: false, message: 'Email already registered' });
             return;
         }
 
-        const user = await User.create({ name, email, password });
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = await prisma.user.create({
+            data: {
+                name,
+                email,
+                role: 'member',
+            },
+        });
+
+        // Create Better Auth credential account
+        await prisma.account.create({
+            data: {
+                userId: user.id,
+                accountId: user.id,
+                providerId: 'credential',
+                password: hashedPassword,
+            },
+        });
 
         const accessToken = generateAccessToken(user.id, user.role);
         const refreshToken = generateRefreshToken(user.id);
 
-        // Store hashed refresh token in DB
-        user.refreshToken = await bcrypt.hash(refreshToken, 10);
-        await user.save({ validateBeforeSave: false });
-
         res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
 
         logger.info(`New user registered: ${email}`);
+
         res.status(201).json({
             success: true,
             message: 'Account created successfully',
             accessToken,
-            user,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                avatar: user.avatar,
+                bio: user.bio,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+            },
         });
     } catch (err) {
         next(err);
@@ -64,14 +88,21 @@ export const login = async (
     try {
         const { email, password } = req.body;
 
-        // Select password field explicitly (it's select: false in schema)
-        const user = await User.findOne({ email }).select('+password');
-        if (!user || !user.isActive) {
+        const user = await prisma.user.findUnique({
+            where: { email },
+            include: {
+                accounts: {
+                    where: { providerId: 'credential' },
+                },
+            },
+        });
+
+        if (!user || !user.accounts.length || !user.accounts[0].password) {
             res.status(401).json({ success: false, message: 'Invalid credentials' });
             return;
         }
 
-        const isMatch = await user.comparePassword(password);
+        const isMatch = await bcrypt.compare(password, user.accounts[0].password);
         if (!isMatch) {
             res.status(401).json({ success: false, message: 'Invalid credentials' });
             return;
@@ -80,18 +111,24 @@ export const login = async (
         const accessToken = generateAccessToken(user.id, user.role);
         const refreshToken = generateRefreshToken(user.id);
 
-        // Rotate refresh token (invalidate old)
-        user.refreshToken = await bcrypt.hash(refreshToken, 10);
-        await user.save({ validateBeforeSave: false });
-
         res.cookie('refreshToken', refreshToken, COOKIE_OPTIONS);
 
         logger.info(`User logged in: ${email}`);
+
         res.status(200).json({
             success: true,
             message: 'Login successful',
             accessToken,
-            user,
+            user: {
+                id: user.id,
+                name: user.name,
+                email: user.email,
+                role: user.role,
+                avatar: user.avatar,
+                bio: user.bio,
+                createdAt: user.createdAt,
+                updatedAt: user.updatedAt,
+            },
         });
     } catch (err) {
         next(err);
@@ -113,25 +150,14 @@ export const refresh = async (
 
         const decoded = verifyRefreshToken(token);
 
-        const user = await User.findById(decoded.userId).select('+refreshToken');
-        if (!user || !user.refreshToken) {
+        const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+        if (!user) {
             res.status(401).json({ success: false, message: 'Invalid refresh token' });
             return;
         }
 
-        // Validate stored hash matches incoming token
-        const isValid = await bcrypt.compare(token, user.refreshToken);
-        if (!isValid) {
-            res.status(401).json({ success: false, message: 'Refresh token mismatch' });
-            return;
-        }
-
-        // Rotate: issue new pair
         const newAccessToken = generateAccessToken(user.id, user.role);
         const newRefreshToken = generateRefreshToken(user.id);
-
-        user.refreshToken = await bcrypt.hash(newRefreshToken, 10);
-        await user.save({ validateBeforeSave: false });
 
         res.cookie('refreshToken', newRefreshToken, COOKIE_OPTIONS);
 
@@ -146,16 +172,11 @@ export const refresh = async (
 
 // ─── LOGOUT ───────────────────────────────────────────────────────────────────
 export const logout = async (
-    req: Request,
+    _req: Request,
     res: Response,
     next: NextFunction
 ): Promise<void> => {
     try {
-        const userId = req.user?.userId;
-        if (userId) {
-            await User.findByIdAndUpdate(userId, { refreshToken: undefined });
-        }
-
         res.clearCookie('refreshToken');
         res.status(200).json({ success: true, message: 'Logged out successfully' });
     } catch (err) {
@@ -170,7 +191,25 @@ export const getMe = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const user = await User.findById(req.user?.userId);
+        if (!req.user?.userId) {
+            res.status(401).json({ success: false, message: 'Not authenticated' });
+            return;
+        }
+
+        const user = await prisma.user.findUnique({
+            where: { id: req.user.userId },
+            select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                avatar: true,
+                bio: true,
+                createdAt: true,
+                updatedAt: true,
+            },
+        });
+
         if (!user) {
             res.status(404).json({ success: false, message: 'User not found' });
             return;

@@ -7,11 +7,17 @@
     "dev": "node ./node_modules/tsx/dist/cli.mjs watch src/index.ts",
     "build": "node ./node_modules/typescript/bin/tsc",
     "start": "node dist/index.js",
+    "prisma:generate": "prisma generate",
+    "prisma:push": "prisma db push",
+    "prisma:seed": "node ./node_modules/tsx/dist/cli.mjs prisma/seed.ts",
+    "seed": "node ./node_modules/tsx/dist/cli.mjs prisma/seed.ts",
     "lint": "node ./node_modules/.bin/eslint src/**/*.ts"
   },
   "dependencies": {
+    "@prisma/client": "5.22.0",
     "@socket.io/redis-adapter": "^8.3.0",
     "bcryptjs": "^2.4.3",
+    "better-auth": "^1.7.6",
     "cloudinary": "^2.9.0",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
@@ -39,6 +45,7 @@
     "@types/multer": "^1.4.11",
     "@types/node": "^20.14.2",
     "@types/uuid": "^10.0.0",
+    "prisma": "5.22.0",
     "tsx": "^4.15.7",
     "typescript": "^5.4.5"
   }

@@ -1,6 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, JwtPayload } from '../utils/jwt';
-import User from '../models/User';
+import prisma from '../config/prisma';
+import { auth } from '../config/auth';
+import { fromNodeHeaders } from 'better-auth/node';
 
 // Extend Express Request with user property
 declare global {
@@ -9,13 +11,15 @@ declare global {
             user?: {
                 userId: string;
                 role: string;
+                email?: string;
+                name?: string;
             };
         }
     }
 }
 
 /**
- * protect — verifies Bearer access token and attaches user to req
+ * protect — verifies Better Auth session or Bearer access token and attaches user to req
  */
 export const protect = async (
     req: Request,
@@ -23,29 +27,53 @@ export const protect = async (
     next: NextFunction
 ): Promise<void> => {
     try {
+        // 1. Try Better Auth Session first
+        try {
+            const session = await auth.api.getSession({
+                headers: fromNodeHeaders(req.headers),
+            });
+
+            if (session && session.user) {
+                req.user = {
+                    userId: session.user.id,
+                    role: (session.user as any).role || 'member',
+                    email: session.user.email,
+                    name: session.user.name,
+                };
+                return next();
+            }
+        } catch {
+            // Fallback to Bearer token
+        }
+
+        // 2. Try Authorization Bearer Token
         const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            res.status(401).json({ success: false, message: 'No token provided' });
-            return;
+        if (authHeader && authHeader.startsWith('Bearer ')) {
+            const token = authHeader.split(' ')[1];
+            const decoded = verifyAccessToken(token) as JwtPayload;
+
+            const user = await prisma.user.findUnique({
+                where: { id: decoded.userId },
+                select: { id: true, role: true, email: true, name: true },
+            });
+
+            if (user) {
+                req.user = {
+                    userId: user.id,
+                    role: user.role,
+                    email: user.email,
+                    name: user.name,
+                };
+                return next();
+            }
         }
 
-        const token = authHeader.split(' ')[1];
-        const decoded = verifyAccessToken(token) as JwtPayload;
-
-        // Confirm user still exists and is active
-        const user = await User.findById(decoded.userId).select('isActive role');
-        if (!user || !user.isActive) {
-            res.status(401).json({ success: false, message: 'User not found or deactivated' });
-            return;
-        }
-
-        req.user = { userId: decoded.userId, role: decoded.role };
-        next();
+        res.status(401).json({ success: false, message: 'Unauthorized - No valid session or token provided' });
     } catch (err: unknown) {
         const message =
             err instanceof Error && err.name === 'TokenExpiredError'
                 ? 'Access token expired'
-                : 'Invalid token';
+                : 'Invalid session or token';
         res.status(401).json({ success: false, message });
     }
 };
