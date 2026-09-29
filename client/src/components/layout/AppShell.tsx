@@ -4,14 +4,25 @@ import { useUiStore } from '../../store/ui.store';
 import { useLogout } from '../../hooks/useAuth';
 import {
     LayoutDashboard, Video, FolderKanban, BarChart3, Bell,
-    User, LogOut, Zap, Menu, X, ChevronRight, Settings,
+    LogOut, Zap, Menu, X, Settings, Plus, Search,
+    Sparkles, ShieldCheck, User, ChevronDown
 } from 'lucide-react';
+import { useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { 
+    DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, 
+    DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator 
+} from '../ui/dropdown-menu';
+import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
+import { Input } from '../ui/input';
 
 const navItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/meetings', icon: Video, label: 'Meetings' },
     { path: '/workspaces', icon: FolderKanban, label: 'Workspaces' },
     { path: '/analytics', icon: BarChart3, label: 'Analytics' },
+    { path: '/notifications', icon: Bell, label: 'Notifications', badge: '2' },
 ];
 
 export default function AppShell() {
@@ -20,114 +31,160 @@ export default function AppShell() {
     const location = useLocation();
     const navigate = useNavigate();
     const logout = useLogout();
+    const [quickJoinId, setQuickJoinId] = useState('');
 
-    const initials = user?.name?.split(' ').map((n) => n[0]).join('').toUpperCase() || '?';
+    const initials = user?.name?.split(' ').map((n) => n[0]).join('').toUpperCase() || 'U';
+
+    const handleQuickJoin = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (quickJoinId.trim()) {
+            navigate(`/meeting/${quickJoinId.trim()}`);
+            setQuickJoinId('');
+        }
+    };
 
     return (
-        <div style={{ display: 'flex', minHeight: '100vh' }}>
-            {/* ─── Sidebar ────────────────────────────────────── */}
-            <aside style={{
-                width: sidebarOpen ? 240 : 72, flexShrink: 0,
-                background: 'var(--color-surface)',
-                borderRight: '1px solid var(--color-border)',
-                display: 'flex', flexDirection: 'column',
-                transition: 'width 0.2s ease', overflow: 'hidden',
-            }}>
-                {/* Logo */}
-                <div style={{
-                    padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.75rem',
-                    borderBottom: '1px solid var(--color-border)',
-                }}>
-                    <div style={{
-                        width: 36, height: 36, borderRadius: '0.75rem', flexShrink: 0,
-                        background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                        <Zap size={20} color="white" />
+        <div className="flex min-h-screen bg-slate-950 text-slate-100">
+            {/* Sidebar */}
+            <aside
+                className={`flex flex-col shrink-0 bg-slate-900/90 border-r border-white/10 transition-all duration-300 z-40 ${
+                    sidebarOpen ? 'w-64' : 'w-20'
+                }`}
+            >
+                {/* Brand Header */}
+                <div className="flex items-center gap-3 px-4 h-16 border-b border-white/10">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shrink-0 shadow-md shadow-indigo-500/25">
+                        <Zap className="w-5 h-5 text-white" />
                     </div>
-                    {sidebarOpen && <span style={{ fontWeight: 700, fontSize: '1.125rem', color: 'white', whiteSpace: 'nowrap' }}>IntellMeet</span>}
+                    {sidebarOpen && (
+                        <div className="flex flex-col">
+                            <span className="font-bold text-base tracking-tight text-white">IntellMeet</span>
+                            <span className="text-[10px] text-indigo-400 font-medium tracking-wide">ENTERPRISE AI</span>
+                        </div>
+                    )}
                 </div>
 
-                {/* Nav Items */}
-                <nav style={{ flex: 1, padding: '0.75rem 0.5rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                {/* Navigation Items */}
+                <nav className="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto">
                     {navItems.map((item) => {
-                        const active = location.pathname.startsWith(item.path);
+                        const Icon = item.icon;
+                        const isActive = location.pathname === item.path;
+
                         return (
-                            <Link key={item.path} to={item.path} style={{
-                                display: 'flex', alignItems: 'center', gap: '0.75rem',
-                                padding: '0.625rem 0.75rem', borderRadius: '0.625rem',
-                                textDecoration: 'none', transition: 'all 0.15s',
-                                background: active ? 'rgba(99,102,241,0.12)' : 'transparent',
-                                color: active ? '#818cf8' : 'var(--color-text-secondary)',
-                            }}>
-                                <item.icon size={20} />
-                                {sidebarOpen && <span style={{ fontSize: '0.875rem', fontWeight: active ? 600 : 400 }}>{item.label}</span>}
+                            <Link
+                                key={item.path}
+                                to={item.path}
+                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                                    isActive
+                                        ? 'bg-gradient-to-r from-indigo-600 to-indigo-700 text-white shadow-md shadow-indigo-500/25'
+                                        : 'text-slate-400 hover:text-white hover:bg-white/[0.05]'
+                                }`}
+                                title={!sidebarOpen ? item.label : undefined}
+                            >
+                                <Icon className="w-5 h-5 shrink-0" />
+                                {sidebarOpen && <span className="flex-1 truncate">{item.label}</span>}
+                                {sidebarOpen && item.badge && (
+                                    <Badge variant="cyan" className="px-1.5 py-0 text-[10px]">
+                                        {item.badge}
+                                    </Badge>
+                                )}
                             </Link>
                         );
                     })}
                 </nav>
 
-                {/* User section */}
-                <div style={{ padding: '0.75rem', borderTop: '1px solid var(--color-border)' }}>
-                    <div onClick={() => navigate('/profile')} style={{
-                        display: 'flex', alignItems: 'center', gap: '0.75rem',
-                        padding: '0.625rem 0.75rem', borderRadius: '0.625rem',
-                        cursor: 'pointer', transition: 'background 0.15s',
-                    }}>
-                        <div style={{
-                            width: 32, height: 32, borderRadius: '0.5rem', flexShrink: 0,
-                            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '0.75rem', fontWeight: 600, color: 'white',
-                        }}>
-                            {user?.avatar ? <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', borderRadius: '0.5rem', objectFit: 'cover' }} /> : initials}
-                        </div>
-                        {sidebarOpen && (
-                            <div style={{ overflow: 'hidden' }}>
-                                <div style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'white', whiteSpace: 'nowrap' }}>{user?.name}</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--color-muted)', whiteSpace: 'nowrap' }}>{user?.email}</div>
-                            </div>
-                        )}
-                    </div>
-                    <button onClick={() => logout.mutate()} className="btn btn-ghost" style={{
-                        width: '100%', justifyContent: sidebarOpen ? 'flex-start' : 'center',
-                        marginTop: '0.375rem', color: 'var(--color-muted)', padding: '0.5rem 0.75rem',
-                    }}>
-                        <LogOut size={18} />
-                        {sidebarOpen && <span style={{ fontSize: '0.8125rem' }}>Sign Out</span>}
-                    </button>
+                {/* Bottom User Area */}
+                <div className="p-3 border-t border-white/10">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className="flex items-center gap-3 w-full p-2 rounded-xl hover:bg-white/[0.05] transition-colors text-left">
+                                <Avatar className="h-9 w-9">
+                                    <AvatarFallback>{initials}</AvatarFallback>
+                                </Avatar>
+                                {sidebarOpen && (
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-xs font-semibold text-white truncate">{user?.name || 'Admin User'}</p>
+                                        <p className="text-[11px] text-slate-400 truncate">{user?.email || 'admin@intellmeet.io'}</p>
+                                    </div>
+                                )}
+                                {sidebarOpen && <ChevronDown className="w-4 h-4 text-slate-400" />}
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent side="right" align="end" className="w-56">
+                            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => navigate('/profile')}>
+                                <User className="w-4 h-4 mr-2" /> Profile & Settings
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => navigate('/notifications')}>
+                                <Bell className="w-4 h-4 mr-2" /> Notification Center
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => logout.mutate()} className="text-rose-400 focus:text-rose-300">
+                                <LogOut className="w-4 h-4 mr-2" /> Sign Out
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </aside>
 
-            {/* ─── Main Content ─────────────────────────────── */}
-            <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-                {/* Top Bar */}
-                <header style={{
-                    height: 56, padding: '0 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    borderBottom: '1px solid var(--color-border)', background: 'var(--color-bg-secondary)', flexShrink: 0,
-                }}>
-                    <button onClick={toggleSidebar} className="btn btn-ghost btn-icon">
-                        {sidebarOpen ? <X size={18} /> : <Menu size={18} />}
-                    </button>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Link to="/notifications" className="btn btn-ghost btn-icon" style={{ position: 'relative' }}>
-                            <Bell size={18} />
-                            <span style={{
-                                position: 'absolute', top: 4, right: 4, width: 8, height: 8,
-                                borderRadius: '50%', background: '#ef4444',
-                            }} />
-                        </Link>
-                        <Link to="/profile" className="btn btn-ghost btn-icon">
-                            <Settings size={18} />
-                        </Link>
+            {/* Main Content Area */}
+            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+                {/* Topbar */}
+                <header className="h-16 px-6 bg-slate-900/60 border-b border-white/10 backdrop-blur-xl flex items-center justify-between gap-4 sticky top-0 z-30">
+                    <div className="flex items-center gap-4">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={toggleSidebar}
+                            className="text-slate-400 hover:text-white"
+                        >
+                            <Menu className="w-5 h-5" />
+                        </Button>
+
+                        <form onSubmit={handleQuickJoin} className="hidden sm:flex items-center w-64 md:w-80">
+                            <Input
+                                value={quickJoinId}
+                                onChange={(e) => setQuickJoinId(e.target.value)}
+                                placeholder="Enter Room ID to jump in..."
+                                icon={<Search className="w-4 h-4" />}
+                                className="h-9 text-xs"
+                            />
+                        </form>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <Badge variant="success" className="hidden md:inline-flex">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse mr-1" />
+                            Better Auth + Neon Live
+                        </Badge>
+
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => navigate('/notifications')}
+                            className="relative text-slate-300"
+                        >
+                            <Bell className="w-4 h-4" />
+                            <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-indigo-500" />
+                        </Button>
+
+                        <Button
+                            variant="default"
+                            size="sm"
+                            onClick={() => navigate('/dashboard')}
+                        >
+                            <Plus className="w-4 h-4 mr-1" />
+                            New Meeting
+                        </Button>
                     </div>
                 </header>
 
-                {/* Page Content */}
-                <div style={{ flex: 1, overflow: 'auto', padding: '1.5rem' }}>
+                {/* Page View Body */}
+                <main className="flex-1 overflow-y-auto p-6 lg:p-8">
                     <Outlet />
-                </div>
-            </main>
+                </main>
+            </div>
         </div>
     );
 }
