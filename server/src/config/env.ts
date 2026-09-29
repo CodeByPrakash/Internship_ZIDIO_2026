@@ -17,7 +17,7 @@ export const env = {
     PORT: parseInt(process.env.PORT || '5000', 10),
     NODE_ENV: process.env.NODE_ENV || 'development',
 
-    MONGO_URI: getEnv('MONGO_URI'),
+    DATABASE_URL: getEnv('DATABASE_URL', process.env.MONGO_URI || 'postgresql://user:password@ep-sample-neon-pooler.us-east-2.aws.neon.tech/intellmeet?sslmode=require'),
 
     JWT_SECRET: getEnv('JWT_SECRET'),
     JWT_REFRESH_SECRET: getEnv('JWT_REFRESH_SECRET'),

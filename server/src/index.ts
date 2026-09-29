@@ -22,9 +22,12 @@ import aiRoutes from './routes/ai.routes';
 import workspaceRoutes from './routes/workspace.routes';
 import { notFound, errorHandler } from './middleware/error.middleware';
 
+import { toNodeHandler } from 'better-auth/node';
+import { auth } from './config/auth';
+
 const app = express();
 
-// ─── Security & Parsing Middleware ────────────────────────────────────────────
+// ─── Security Middleware ──────────────────────────────────────────────────────
 
 app.use(helmet());
 app.use(
@@ -35,6 +38,13 @@ app.use(
         allowedHeaders: ['Content-Type', 'Authorization'],
     })
 );
+
+// ─── Better Auth Native Handler (Mounted before express.json body parser) ─────
+
+app.all('/api/auth/*', toNodeHandler(auth));
+
+// ─── Parsing & Logging Middleware ─────────────────────────────────────────────
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser(env.COOKIE_SECRET));
@@ -52,10 +62,10 @@ app.get('/health', (_req, res) => {
     });
 });
 
-// ─── API Routes ───────────────────────────────────────────────────────────────
+// ─── REST API Routes ──────────────────────────────────────────────────────────
 
 app.use('/api', apiLimiter);          // Global 100 req/15min
-app.use('/api/auth', authRoutes);     // auth limiter applied per-route inside
+app.use('/api/auth', authRoutes);     // REST auth helpers & tokens
 app.use('/api/users', userRoutes);
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/chat', chatRoutes);
@@ -73,21 +83,16 @@ app.use(errorHandler);
 const httpServer = http.createServer(app);
 const io = createSocketServer(httpServer);
 
-// Make io available on app for controller use if needed
-app.set('io', io);
-
-// ─── Start ────────────────────────────────────────────────────────────────────
+// ─── Startup Sequence ────────────────────────────────────────────────────────
 
 const startServer = async () => {
+    // 1. Connect Neon PostgreSQL
     await connectDB();
 
-    // Redis connection (non-fatal: app degrades gracefully without cache)
-    try {
-        await connectRedis();
-    } catch (err) {
-        logger.warn(`⚠️  Redis unavailable — caching disabled: ${err}`);
-    }
+    // 2. Connect Redis (optional caching / scaling)
+    await connectRedis();
 
+    // 3. Start HTTP Server
     httpServer.listen(env.PORT, () => {
         logger.info(`🚀 IntellMeet Server running on port ${env.PORT} [${env.NODE_ENV}]`);
         logger.info(`📡 API: http://localhost:${env.PORT}/api`);
@@ -96,7 +101,18 @@ const startServer = async () => {
     });
 };
 
+// Handle unhandled rejections
+process.on('unhandledRejection', (err: Error) => {
+    logger.error(`Unhandled Rejection: ${err.message}`);
+    httpServer.close(() => process.exit(1));
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err: Error) => {
+    logger.error(`Uncaught Exception: ${err.message}`);
+    process.exit(1);
+});
+
 startServer();
 
-export { io };
-export default app;
+export { app, io };

@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
-import Meeting from '../models/Meeting';
+import prisma from '../config/prisma';
 
-// Mock AI transcription — returns realistic fake transcript
+// Mock AI transcription — returns realistic transcript
 const mockTranscribe = (): string[] => [
     'Welcome everyone to today\'s standup meeting.',
     'Let\'s go around and share our updates.',
@@ -32,9 +32,18 @@ export const transcribeMeeting = async (req: Request, res: Response, next: NextF
         const meetingId = req.params.meetingId;
 
         if (meetingId) {
-            await Meeting.findByIdAndUpdate(meetingId, {
-                $set: { transcript: transcript.join('\n') },
+            const meeting = await prisma.meeting.findFirst({
+                where: { OR: [{ id: meetingId }, { roomId: meetingId }] },
             });
+
+            if (meeting) {
+                await prisma.meeting.update({
+                    where: { id: meeting.id },
+                    data: {
+                        agenda: transcript,
+                    },
+                });
+            }
         }
 
         res.status(200).json({ success: true, transcript });
@@ -45,21 +54,39 @@ export const transcribeMeeting = async (req: Request, res: Response, next: NextF
 
 export const summarizeMeeting = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const meeting = await Meeting.findById(req.params.meetingId);
+        const meetingId = req.params.meetingId;
+        const meeting = await prisma.meeting.findFirst({
+            where: { OR: [{ id: meetingId }, { roomId: meetingId }] },
+        });
+
         if (!meeting) {
             res.status(404).json({ success: false, message: 'Meeting not found' });
             return;
         }
 
-        const transcript = (meeting as any).transcript?.split('\n') || mockTranscribe();
+        const transcript = (Array.isArray(meeting.agenda) ? (meeting.agenda as string[]) : mockTranscribe());
         const result = mockSummarize(transcript);
 
-        await Meeting.findByIdAndUpdate(req.params.meetingId, {
-            $set: {
+        await prisma.meeting.update({
+            where: { id: meeting.id },
+            data: {
                 aiSummary: result.summary,
-                actionItems: result.actionItems,
+                keyDecisions: result.keyDecisions,
             },
         });
+
+        // Store action items
+        for (const item of result.actionItems) {
+            await prisma.actionItem.create({
+                data: {
+                    meetingId: meeting.id,
+                    text: item.text,
+                    assignee: item.assignee,
+                    dueDate: item.dueDate,
+                    status: item.status,
+                },
+            }).catch(() => null);
+        }
 
         res.status(200).json({ success: true, ...result });
     } catch (err) {
@@ -69,18 +96,22 @@ export const summarizeMeeting = async (req: Request, res: Response, next: NextFu
 
 export const getAiSummary = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-        const meeting = await Meeting.findById(req.params.meetingId);
+        const meetingId = req.params.meetingId;
+        const meeting = await prisma.meeting.findFirst({
+            where: { OR: [{ id: meetingId }, { roomId: meetingId }] },
+            include: { actionItems: true },
+        });
+
         if (!meeting) {
             res.status(404).json({ success: false, message: 'Meeting not found' });
             return;
         }
 
-        const m = meeting as any;
         res.status(200).json({
             success: true,
-            summary: m.aiSummary || null,
-            transcript: m.transcript || null,
-            actionItems: m.actionItems || [],
+            summary: meeting.aiSummary || null,
+            keyDecisions: meeting.keyDecisions || [],
+            actionItems: meeting.actionItems || [],
         });
     } catch (err) {
         next(err);

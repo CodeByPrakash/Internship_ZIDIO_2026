@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import mongoose from 'mongoose';
-import Meeting from '../models/Meeting';
+import prisma from '../config/prisma';
 import { cacheGet, cacheSet, cacheDel } from '../utils/cache';
 import logger from '../utils/logger';
 
@@ -15,25 +14,40 @@ export const createMeeting = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const { title, description, startTime, agenda, passcode } = req.body;
+        if (!req.user?.userId) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
+            return;
+        }
 
-        const meeting = await Meeting.create({
-            title,
-            description,
-            agenda,
-            passcode,
-            startTime: startTime ? new Date(startTime) : undefined,
-            host: req.user!.userId,
-            participants: [
-                {
-                    user: new mongoose.Types.ObjectId(req.user!.userId),
-                    role: 'host',
-                    joinedAt: new Date(),
+        const { title, description, startTime, agenda, roomId } = req.body;
+        const meetingRoomId = roomId || crypto.randomUUID();
+
+        const meeting = await prisma.meeting.create({
+            data: {
+                title,
+                description,
+                roomId: meetingRoomId,
+                agenda: agenda ? (Array.isArray(agenda) ? agenda : [agenda]) : undefined,
+                startTime: startTime ? new Date(startTime) : undefined,
+                hostId: req.user.userId,
+                participants: {
+                    create: {
+                        userId: req.user.userId,
+                        role: 'host',
+                    },
                 },
-            ],
+            },
+            include: {
+                host: { select: { id: true, name: true, email: true, avatar: true } },
+                participants: {
+                    include: {
+                        user: { select: { id: true, name: true, avatar: true } },
+                    },
+                },
+            },
         });
 
-        logger.info(`Meeting created: ${meeting.roomId} by user ${req.user!.userId}`);
+        logger.info(`Meeting created: ${meeting.roomId} by user ${req.user.userId}`);
         res.status(201).json({ success: true, meeting });
     } catch (err) {
         next(err);
@@ -48,23 +62,44 @@ export const getMeetings = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const userId = req.user!.userId;
+        if (!req.user?.userId) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
+            return;
+        }
+
+        const userId = req.user.userId;
         const { status, page = 1, limit = 10 } = req.query;
 
-        const filter: Record<string, unknown> = {
-            $or: [{ host: userId }, { 'participants.user': userId }],
+        const whereClause: any = {
+            OR: [
+                { hostId: userId },
+                { participants: { some: { userId } } },
+            ],
         };
-        if (status) filter.status = status;
+
+        if (status) {
+            whereClause.status = String(status);
+        }
 
         const skip = (Number(page) - 1) * Number(limit);
+        const take = Number(limit);
+
         const [meetings, total] = await Promise.all([
-            Meeting.find(filter)
-                .populate('host', 'name email avatar')
-                .populate('participants.user', 'name avatar')
-                .sort({ createdAt: -1 })
-                .skip(skip)
-                .limit(Number(limit)),
-            Meeting.countDocuments(filter),
+            prisma.meeting.findMany({
+                where: whereClause,
+                include: {
+                    host: { select: { id: true, name: true, email: true, avatar: true } },
+                    participants: {
+                        include: {
+                            user: { select: { id: true, name: true, avatar: true } },
+                        },
+                    },
+                },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take,
+            }),
+            prisma.meeting.count({ where: whereClause }),
         ]);
 
         res.status(200).json({
@@ -87,6 +122,11 @@ export const getMeetingById = async (
     next: NextFunction
 ): Promise<void> => {
     try {
+        if (!req.user?.userId) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
+            return;
+        }
+
         const key = cacheKey(req.params.id);
 
         // Try cache first
@@ -99,27 +139,29 @@ export const getMeetingById = async (
 
         logger.debug(`Cache MISS: ${key}`);
 
-        const meeting = await Meeting.findById(req.params.id)
-            .populate('host', 'name email avatar')
-            .populate('participants.user', 'name avatar');
+        // Find by id or roomId
+        const meeting = await prisma.meeting.findFirst({
+            where: {
+                OR: [{ id: req.params.id }, { roomId: req.params.id }],
+            },
+            include: {
+                host: { select: { id: true, name: true, email: true, avatar: true } },
+                participants: {
+                    include: {
+                        user: { select: { id: true, name: true, avatar: true } },
+                    },
+                },
+                actionItems: true,
+            },
+        });
 
         if (!meeting) {
             res.status(404).json({ success: false, message: 'Meeting not found' });
             return;
         }
 
-        const userId = req.user!.userId;
-        const isMember =
-            meeting.host._id.toString() === userId ||
-            meeting.participants.some((p) => p.user._id.toString() === userId);
-
-        if (!isMember) {
-            res.status(403).json({ success: false, message: 'Access denied' });
-            return;
-        }
-
         // Store in cache
-        await cacheSet(key, meeting.toJSON(), CACHE_TTL);
+        await cacheSet(key, meeting, CACHE_TTL);
 
         res.status(200).json({ success: true, meeting });
     } catch (err) {
@@ -135,13 +177,23 @@ export const updateMeeting = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const meeting = await Meeting.findById(req.params.id);
+        if (!req.user?.userId) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
+            return;
+        }
+
+        const meeting = await prisma.meeting.findFirst({
+            where: {
+                OR: [{ id: req.params.id }, { roomId: req.params.id }],
+            },
+        });
+
         if (!meeting) {
             res.status(404).json({ success: false, message: 'Meeting not found' });
             return;
         }
 
-        if (meeting.host.toString() !== req.user!.userId) {
+        if (meeting.hostId !== req.user.userId) {
             res.status(403).json({ success: false, message: 'Only the host can update this meeting' });
             return;
         }
@@ -151,18 +203,24 @@ export const updateMeeting = async (
             return;
         }
 
-        const { title, description, startTime, agenda } = req.body;
-        Object.assign(meeting, {
-            ...(title && { title }),
-            ...(description !== undefined && { description }),
-            ...(startTime && { startTime: new Date(startTime) }),
-            ...(agenda !== undefined && { agenda }),
+        const { title, description, startTime, agenda, aiSummary, keyDecisions } = req.body;
+
+        const updated = await prisma.meeting.update({
+            where: { id: meeting.id },
+            data: {
+                ...(title && { title }),
+                ...(description !== undefined && { description }),
+                ...(startTime && { startTime: new Date(startTime) }),
+                ...(agenda !== undefined && { agenda: Array.isArray(agenda) ? agenda : [agenda] }),
+                ...(aiSummary !== undefined && { aiSummary }),
+                ...(keyDecisions !== undefined && { keyDecisions }),
+            },
         });
 
-        await meeting.save();
-        await cacheDel(cacheKey(req.params.id)); // Invalidate cache
+        await cacheDel(cacheKey(req.params.id));
+        await cacheDel(cacheKey(meeting.roomId));
 
-        res.status(200).json({ success: true, meeting });
+        res.status(200).json({ success: true, meeting: updated });
     } catch (err) {
         next(err);
     }
@@ -176,21 +234,37 @@ export const deleteMeeting = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const meeting = await Meeting.findById(req.params.id);
+        if (!req.user?.userId) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
+            return;
+        }
+
+        const meeting = await prisma.meeting.findFirst({
+            where: {
+                OR: [{ id: req.params.id }, { roomId: req.params.id }],
+            },
+        });
+
         if (!meeting) {
             res.status(404).json({ success: false, message: 'Meeting not found' });
             return;
         }
 
-        if (meeting.host.toString() !== req.user!.userId) {
+        if (meeting.hostId !== req.user.userId) {
             res.status(403).json({ success: false, message: 'Only the host can delete this meeting' });
             return;
         }
 
-        meeting.status = 'ended';
-        meeting.endTime = new Date();
-        await meeting.save();
-        await cacheDel(cacheKey(req.params.id)); // Invalidate cache
+        await prisma.meeting.update({
+            where: { id: meeting.id },
+            data: {
+                status: 'ended',
+                endTime: new Date(),
+            },
+        });
+
+        await cacheDel(cacheKey(req.params.id));
+        await cacheDel(cacheKey(meeting.roomId));
 
         res.status(200).json({ success: true, message: 'Meeting cancelled' });
     } catch (err) {
@@ -206,7 +280,18 @@ export const joinMeeting = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const meeting = await Meeting.findById(req.params.id);
+        if (!req.user?.userId) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
+            return;
+        }
+
+        const meeting = await prisma.meeting.findFirst({
+            where: {
+                OR: [{ id: req.params.id }, { roomId: req.params.id }],
+            },
+            include: { participants: true },
+        });
+
         if (!meeting) {
             res.status(404).json({ success: false, message: 'Meeting not found' });
             return;
@@ -217,34 +302,36 @@ export const joinMeeting = async (
             return;
         }
 
-        const userId = req.user!.userId;
-        const alreadyJoined = meeting.participants.some(
-            (p) => p.user.toString() === userId
-        );
+        const userId = req.user.userId;
+        const existingParticipant = meeting.participants.find((p) => p.userId === userId);
 
-        if (!alreadyJoined) {
-            meeting.participants.push({
-                user: new mongoose.Types.ObjectId(userId),
-                role: 'attendee',
-                joinedAt: new Date(),
+        if (!existingParticipant) {
+            await prisma.participant.create({
+                data: {
+                    meetingId: meeting.id,
+                    userId,
+                    role: meeting.hostId === userId ? 'host' : 'attendee',
+                },
             });
         } else {
-            const participant = meeting.participants.find(
-                (p) => p.user.toString() === userId
-            );
-            if (participant) {
-                participant.joinedAt = new Date();
-                participant.leftAt = undefined;
-            }
+            await prisma.participant.update({
+                where: { id: existingParticipant.id },
+                data: { joinedAt: new Date(), leftAt: null },
+            });
         }
 
         if (meeting.status === 'scheduled') {
-            meeting.status = 'active';
-            meeting.startTime = meeting.startTime || new Date();
+            await prisma.meeting.update({
+                where: { id: meeting.id },
+                data: {
+                    status: 'active',
+                    startTime: meeting.startTime || new Date(),
+                },
+            });
         }
 
-        await meeting.save();
         await cacheDel(cacheKey(req.params.id));
+        await cacheDel(cacheKey(meeting.roomId));
 
         res.status(200).json({
             success: true,
@@ -264,20 +351,28 @@ export const leaveMeeting = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const meeting = await Meeting.findById(req.params.id);
-        if (!meeting) {
-            res.status(404).json({ success: false, message: 'Meeting not found' });
+        if (!req.user?.userId) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
             return;
         }
 
-        const participant = meeting.participants.find(
-            (p) => p.user.toString() === req.user!.userId
-        );
+        const meeting = await prisma.meeting.findFirst({
+            where: {
+                OR: [{ id: req.params.id }, { roomId: req.params.id }],
+            },
+            include: { participants: true },
+        });
 
-        if (participant) {
-            participant.leftAt = new Date();
-            await meeting.save();
+        if (meeting) {
+            const participant = meeting.participants.find((p) => p.userId === req.user?.userId);
+            if (participant) {
+                await prisma.participant.update({
+                    where: { id: participant.id },
+                    data: { leftAt: new Date() },
+                });
+            }
             await cacheDel(cacheKey(req.params.id));
+            await cacheDel(cacheKey(meeting.roomId));
         }
 
         res.status(200).json({ success: true, message: 'Left meeting' });
@@ -294,27 +389,39 @@ export const endMeeting = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        const meeting = await Meeting.findById(req.params.id);
+        if (!req.user?.userId) {
+            res.status(401).json({ success: false, message: 'Unauthorized' });
+            return;
+        }
+
+        const meeting = await prisma.meeting.findFirst({
+            where: {
+                OR: [{ id: req.params.id }, { roomId: req.params.id }],
+            },
+        });
+
         if (!meeting) {
             res.status(404).json({ success: false, message: 'Meeting not found' });
             return;
         }
 
-        if (meeting.host.toString() !== req.user!.userId) {
+        if (meeting.hostId !== req.user.userId) {
             res.status(403).json({ success: false, message: 'Only the host can end this meeting' });
             return;
         }
 
-        meeting.status = 'ended';
-        meeting.endTime = new Date();
-        meeting.participants.forEach((p) => {
-            if (!p.leftAt) p.leftAt = new Date();
+        const updated = await prisma.meeting.update({
+            where: { id: meeting.id },
+            data: {
+                status: 'ended',
+                endTime: new Date(),
+            },
         });
 
-        await meeting.save();
         await cacheDel(cacheKey(req.params.id));
+        await cacheDel(cacheKey(meeting.roomId));
 
-        res.status(200).json({ success: true, message: 'Meeting ended', meeting });
+        res.status(200).json({ success: true, message: 'Meeting ended', meeting: updated });
     } catch (err) {
         next(err);
     }
