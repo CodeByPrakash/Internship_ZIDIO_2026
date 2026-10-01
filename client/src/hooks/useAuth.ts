@@ -9,28 +9,28 @@ export const useLogin = () => {
     const setAuth = useAuthStore((s) => s.setAuth);
     return useMutation({
         mutationFn: async (data: { email: string; password: string }) => {
-            // 1. Authenticate with Better Auth Client
-            const result = await authClient.signIn.email({
-                email: data.email,
-                password: data.password,
-            });
-
-            if (result.error) {
-                // Fallback to legacy/direct endpoint if needed
+            // 1. Direct REST login provides full verified JWT access token & user object
+            try {
+                const res = await api.post('/auth/login', data);
+                try {
+                    await authClient.signIn.email({
+                        email: data.email,
+                        password: data.password,
+                    });
+                } catch {}
+                return res.data;
+            } catch (err: any) {
+                // If direct login fails, attempt Better Auth fallback
+                const result = await authClient.signIn.email({
+                    email: data.email,
+                    password: data.password,
+                });
+                if (result.error) {
+                    throw new Error(result.error.message || 'Login failed. Please verify credentials.');
+                }
                 const res = await api.post('/auth/login', data);
                 return res.data;
             }
-
-            // Sync user data
-            const user = result.data?.user || {
-                id: (result.data as any)?.session?.userId,
-                email: data.email,
-                name: (result.data as any)?.user?.name || 'User',
-                role: (result.data as any)?.user?.role || 'member',
-            };
-            const token = (result.data as any)?.token || (result.data as any)?.session?.token || 'session-active';
-
-            return { user, accessToken: token };
         },
         onSuccess: (data) => {
             setAuth(data.user, data.accessToken);
@@ -38,7 +38,7 @@ export const useLogin = () => {
             toast.success('Welcome back to IntellMeet!');
         },
         onError: (err: any) => {
-            toast.error(err.message || err.response?.data?.message || 'Login failed. Please verify credentials.');
+            toast.error(err.response?.data?.message || err.message || 'Login failed. Please verify credentials.');
         },
     });
 };
@@ -47,27 +47,15 @@ export const useSignup = () => {
     const setAuth = useAuthStore((s) => s.setAuth);
     return useMutation({
         mutationFn: async (data: { name: string; email: string; password: string }) => {
-            // 1. Sign up with Better Auth Client
-            const result = await authClient.signUp.email({
-                name: data.name,
-                email: data.email,
-                password: data.password,
-            });
-
-            if (result.error) {
-                // Fallback to API endpoint
-                const res = await api.post('/auth/signup', data);
-                return res.data;
-            }
-
-            const user = result.data?.user || {
-                name: data.name,
-                email: data.email,
-                role: 'member',
-            };
-            const token = (result.data as any)?.token || (result.data as any)?.session?.token || 'session-active';
-
-            return { user, accessToken: token };
+            // 1. Direct REST signup creates user, password hash, and issues verified JWT access token
+            const res = await api.post('/auth/signup', data);
+            try {
+                await authClient.signIn.email({
+                    email: data.email,
+                    password: data.password,
+                });
+            } catch {}
+            return res.data;
         },
         onSuccess: (data) => {
             setAuth(data.user, data.accessToken);
@@ -75,7 +63,7 @@ export const useSignup = () => {
             toast.success('Account created successfully!');
         },
         onError: (err: any) => {
-            toast.error(err.message || err.response?.data?.message || 'Signup failed');
+            toast.error(err.response?.data?.message || err.message || 'Signup failed');
         },
     });
 };
