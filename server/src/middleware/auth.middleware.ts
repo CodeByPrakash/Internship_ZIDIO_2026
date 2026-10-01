@@ -27,7 +27,7 @@ export const protect = async (
     next: NextFunction
 ): Promise<void> => {
     try {
-        // 1. Try Better Auth Session first
+        // 1. Try Better Auth Session via Cookie / Headers
         try {
             const session = await auth.api.getSession({
                 headers: fromNodeHeaders(req.headers),
@@ -46,25 +46,52 @@ export const protect = async (
             // Fallback to Bearer token
         }
 
-        // 2. Try Authorization Bearer Token
+        // 2. Try Authorization Bearer Token (JWT or Better Auth Token)
         const authHeader = req.headers.authorization;
         if (authHeader && authHeader.startsWith('Bearer ')) {
             const token = authHeader.split(' ')[1];
-            const decoded = verifyAccessToken(token) as JwtPayload;
 
-            const user = await prisma.user.findUnique({
-                where: { id: decoded.userId },
-                select: { id: true, role: true, email: true, name: true },
-            });
+            // A. Try JWT verification first
+            try {
+                const decoded = verifyAccessToken(token) as JwtPayload;
+                if (decoded && decoded.userId) {
+                    const user = await prisma.user.findUnique({
+                        where: { id: decoded.userId },
+                        select: { id: true, role: true, email: true, name: true },
+                    });
 
-            if (user) {
-                req.user = {
-                    userId: user.id,
-                    role: user.role,
-                    email: user.email,
-                    name: user.name,
-                };
-                return next();
+                    if (user) {
+                        req.user = {
+                            userId: user.id,
+                            role: user.role,
+                            email: user.email,
+                            name: user.name,
+                        };
+                        return next();
+                    }
+                }
+            } catch {
+                // Not a JWT, try Better Auth session lookup by token
+            }
+
+            // B. Try Better Auth Session token lookup in DB
+            try {
+                const sessionRecord = await prisma.session.findUnique({
+                    where: { token },
+                    include: { user: true },
+                });
+
+                if (sessionRecord && sessionRecord.user && sessionRecord.expiresAt > new Date()) {
+                    req.user = {
+                        userId: sessionRecord.user.id,
+                        role: sessionRecord.user.role,
+                        email: sessionRecord.user.email,
+                        name: sessionRecord.user.name,
+                    };
+                    return next();
+                }
+            } catch {
+                // Fallback to error response
             }
         }
 
