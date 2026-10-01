@@ -4,6 +4,9 @@ import { useAuthStore } from './store/auth.store';
 
 // Pages
 import Home from './pages/Home';
+import Solutions from './pages/public/Solutions';
+import Pricing from './pages/public/Pricing';
+import Resources from './pages/public/Resources';
 import Login from './pages/auth/Login';
 import Signup from './pages/auth/Signup';
 import Dashboard from './pages/dashboard/Dashboard';
@@ -48,6 +51,9 @@ function App() {
             <Routes>
                 {/* Public */}
                 <Route path="/" element={<Home />} />
+                <Route path="/solutions" element={<Solutions />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/resources" element={<Resources />} />
                 <Route path="/login" element={<GuestRoute><Login /></GuestRoute>} />
                 <Route path="/signup" element={<GuestRoute><Signup /></GuestRoute>} />
 

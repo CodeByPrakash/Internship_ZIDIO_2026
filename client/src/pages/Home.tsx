@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { Badge } from '../components/ui/badge';
 import { Card } from '../components/ui/card';
+import PublicNavbar from '../components/layout/PublicNavbar';
+import PublicFooter from '../components/layout/PublicFooter';
 
 export default function Home() {
     const navigate = useNavigate();
@@ -18,47 +20,8 @@ export default function Home() {
     return (
         <div className="min-h-screen bg-[#f8fbff] text-slate-900 relative overflow-x-hidden font-sans selection:bg-indigo-500 selection:text-white">
             
-            {/* ─── Top Navigation Bar (Seamless Floating Overlay) ──────── */}
-            <header className="absolute top-0 left-0 right-0 z-50 px-6 sm:px-12 lg:px-16 py-5 flex items-center justify-between">
-                {/* Brand Logo */}
-                <Link to="/" className="flex items-center gap-3 group">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-500/25 group-hover:scale-105 transition-transform duration-200">
-                        <Video className="w-5 h-5 text-white fill-white/20" />
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <span className="text-2xl font-black tracking-tight text-slate-900">
-                            Intell<span className="text-indigo-600">Meet</span>
-                        </span>
-                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 tracking-wider">
-                            AI
-                        </span>
-                    </div>
-                </Link>
-
-                {/* Nav Links (Centered) */}
-                <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-800">
-                    <a href="#features" className="hover:text-indigo-600 transition-colors">Features</a>
-                    <a href="#solutions" className="hover:text-indigo-600 transition-colors">Solutions</a>
-                    <a href="#pricing" className="hover:text-indigo-600 transition-colors">Pricing</a>
-                    <a href="#resources" className="hover:text-indigo-600 transition-colors">Resources</a>
-                </nav>
-
-                {/* Right Actions */}
-                <div className="flex items-center gap-4">
-                    <Link 
-                        to="/login" 
-                        className="text-sm font-semibold text-slate-800 hover:text-indigo-600 transition-colors px-2 py-1"
-                    >
-                        Sign In
-                    </Link>
-                    <Link to="/signup">
-                        <button className="px-5 py-2.5 rounded-full bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-sm shadow-md shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center gap-2">
-                            <span>Get Started</span>
-                            <ArrowRight className="w-4 h-4" />
-                        </button>
-                    </Link>
-                </div>
-            </header>
+            {/* ─── Top Navigation Bar (Shared Across All Public Pages) ─── */}
+            <PublicNavbar />
 
             {/* ─── Hero Section with Full Reference Composition ────────── */}
             <section className="relative w-full min-h-screen pt-24 sm:pt-28 pb-12 flex items-center overflow-hidden">
@@ -472,20 +435,8 @@ export default function Home() {
                 </div>
             )}
 
-            {/* ─── Footer ──────────────────────────────────────────────── */}
-            <footer className="border-t border-slate-200/80 bg-white py-8 px-6 sm:px-12 text-slate-600">
-                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white">
-                            <Video className="w-4 h-4 fill-white/20" />
-                        </div>
-                        <span className="font-bold text-slate-900">IntellMeet Enterprise</span>
-                    </div>
-                    <p className="text-xs text-slate-500">
-                        © 2026 IntellMeet Collaboration Inc. Powered by Better Auth & Neon PostgreSQL.
-                    </p>
-                </div>
-            </footer>
+            {/* ─── Shared Public Footer ───────────────────────────────── */}
+            <PublicFooter />
         </div>
     );
 }
