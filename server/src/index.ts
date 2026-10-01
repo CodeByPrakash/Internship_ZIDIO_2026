@@ -26,6 +26,8 @@ import { toNodeHandler } from 'better-auth/node';
 import { auth } from './config/auth';
 
 const app = express();
+app.set('trust proxy', 1);
+
 
 const allowedOrigins = [
     env.CLIENT_URL,

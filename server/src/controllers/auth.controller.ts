@@ -79,6 +79,8 @@ export const signup = async (
     }
 };
 
+import { auth } from '../config/auth';
+
 // ─── LOGIN ────────────────────────────────────────────────────────────────────
 export const login = async (
     req: Request,
@@ -91,18 +93,38 @@ export const login = async (
         const user = await prisma.user.findUnique({
             where: { email },
             include: {
-                accounts: {
-                    where: { providerId: 'credential' },
-                },
+                accounts: true,
             },
         });
 
-        if (!user || !user.accounts.length || !user.accounts[0].password) {
+        if (!user) {
             res.status(401).json({ success: false, message: 'Invalid credentials' });
             return;
         }
 
-        const isMatch = await bcrypt.compare(password, user.accounts[0].password);
+        let isMatch = false;
+
+        // 1. Try Better Auth credential verification
+        try {
+            const authRes = await auth.api.signInEmail({
+                body: { email, password },
+            });
+            if (authRes && authRes.user) {
+                isMatch = true;
+            }
+        } catch {
+            // Fallback to direct password comparison
+        }
+
+        // 2. Try bcrypt comparison
+        if (!isMatch && user.accounts.length && user.accounts[0].password) {
+            try {
+                isMatch = await bcrypt.compare(password, user.accounts[0].password);
+            } catch {
+                // Ignore hash error
+            }
+        }
+
         if (!isMatch) {
             res.status(401).json({ success: false, message: 'Invalid credentials' });
             return;
