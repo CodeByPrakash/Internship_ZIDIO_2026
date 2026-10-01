@@ -7,6 +7,7 @@ const RETRY_DELAY_MS = 3000;
 const connectDB = async (attempt = 1): Promise<void> => {
     try {
         await prisma.$connect();
+        await prisma.$queryRaw`SELECT 1`;
         logger.info('✅ Neon PostgreSQL database connected successfully via Prisma');
     } catch (error) {
         logger.error(`❌ PostgreSQL connection failed (attempt ${attempt}/${MAX_RETRIES}): ${error}`);
