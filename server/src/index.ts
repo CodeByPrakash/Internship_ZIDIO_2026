@@ -65,10 +65,6 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 
 
-// ─── Better Auth Native Handler (Mounted before express.json body parser) ─────
-
-app.all('/api/auth/*', toNodeHandler(auth));
-
 // ─── Parsing & Logging Middleware ─────────────────────────────────────────────
 
 app.use(express.json({ limit: '10mb' }));
@@ -92,17 +88,22 @@ app.get('/favicon.ico', (_req, res) => {
     res.status(204).end();
 });
 
-
 // ─── REST API Routes ──────────────────────────────────────────────────────────
 
 app.use('/api', apiLimiter);          // Global 100 req/15min
-app.use('/api/auth', authRoutes);     // REST auth helpers & tokens
+app.use('/api/auth', authRoutes);     // Custom REST auth: /login, /signup, /refresh, /logout, /me
+
+// ─── Better Auth Native Handler (Mounted for Better Auth endpoints) ───────────
+
+app.all('/api/auth/*', toNodeHandler(auth));
+
 app.use('/api/users', userRoutes);
 app.use('/api/meetings', meetingRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/workspaces', workspaceRoutes);
+
 
 // ─── 404 & Error Handlers ────────────────────────────────────────────────────
 
