@@ -9,7 +9,7 @@ export const env = {
     PORT: parseInt(process.env.PORT || '5000', 10),
     NODE_ENV: process.env.NODE_ENV || 'development',
 
-    DATABASE_URL: process.env.DATABASE_URL,
+    DATABASE_URL: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_CDZ3XWQ1iFEK@ep-fragrant-fire-az26mctw-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&pgbouncer=true&connect_timeout=30',
 
     JWT_SECRET: process.env.JWT_SECRET || '54a86a361835fa95541dcc7174ea46dc8a9e6e14a9ddcb77662f06077d5221b117f3e7d57a2423e7b9499b457f1d2a4670b3733450ba7b80d53fcee73275b4a7',
     JWT_REFRESH_SECRET: process.env.JWT_REFRESH_SECRET || '905943092b3ab2748b505b6d0923433334e130319f5c8eec5df1fdf3600176541471ce6f707ea3ddb5c8bbe8e92eeeb95636d8518dc1d7765fb96b8e2d7d03d6',
