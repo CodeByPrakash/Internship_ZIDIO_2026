@@ -71,13 +71,13 @@ export default function Home() {
                 />
                 
                 {/* Ambient Soft Vignette for Enhanced Text Contrast */}
-                <div className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/60 to-transparent sm:w-[55%] lg:w-[48%] z-0 pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-r from-white/40 via-white/10 to-transparent sm:w-[60%] lg:w-[50%] z-0 pointer-events-none" />
 
                 <div className="w-full max-w-[1440px] mx-auto px-6 sm:px-12 lg:px-16 relative z-10">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center min-h-[calc(100vh-8rem)]">
                         
-                        {/* LEFT COLUMN: HERO CONTENT */}
-                        <div className="lg:col-span-6 max-w-lg space-y-6 text-left py-2">
+                        {/* LEFT COLUMN: HERO CONTENT (Glassmorphic Container) */}
+                        <div className="lg:col-span-6 max-w-xl space-y-6 text-left p-6 sm:p-8 lg:p-9 rounded-3xl bg-white/60 backdrop-blur-2xl border border-white/90 shadow-2xl shadow-slate-900/10 ring-1 ring-white/60 transition-all">
                             
                             {/* Pill Badge */}
                             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-100/90 backdrop-blur-md border border-purple-200/80 shadow-sm text-purple-700 text-xs font-bold tracking-wide">
@@ -117,7 +117,7 @@ export default function Home() {
                             </div>
 
                             {/* 4 Feature Badges (Aligned 4-Column Grid) */}
-                            <div className="grid grid-cols-4 gap-3 sm:gap-4 pt-4 border-t border-slate-300/60 max-w-lg">
+                            <div className="grid grid-cols-4 gap-3 sm:gap-4 pt-4 border-t border-slate-200/80 max-w-lg">
                                 {/* Feature 1 */}
                                 <div className="flex flex-col items-start gap-2 group cursor-pointer">
                                     <div className="w-11 h-11 rounded-2xl bg-rose-100/90 border border-rose-200 flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
@@ -194,8 +194,8 @@ export default function Home() {
                         {/* RIGHT COLUMN: Holographic 4-Person Video Call Floating Tablet */}
                         <div className="lg:col-span-6 relative flex justify-center lg:justify-end items-start pointer-events-auto pb-8 lg:pb-0">
                             
-                            {/* Outer Positioning Container */}
-                            <div className="relative w-full max-w-[420px] xl:max-w-[460px]">
+                            {/* Outer Positioning Container (Adjusted further higher and to the right) */}
+                            <div className="relative w-full max-w-[420px] xl:max-w-[460px] transform lg:-translate-y-16 lg:translate-x-16 xl:-translate-y-24 xl:translate-x-24 2xl:-translate-y-28 2xl:translate-x-32 transition-all duration-300">
                                 
                                 {/* 1. Floating AI Summary Card (Top Left) */}
                                 <div className="absolute -top-7 -left-5 sm:-left-7 z-30 bg-white/95 backdrop-blur-xl p-3 rounded-2xl shadow-xl shadow-indigo-500/15 border border-purple-200/80 animate-bounce" style={{ animationDuration: '4s' }}>

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useMeetings, useCreateMeeting, useDeleteMeeting } from '../../hooks/useMeeting';
 import { 
     Plus, Video, Clock, Users, CalendarDays, ArrowRight, 
-    Sparkles, Trash2, Copy, Search, Play, Check, Share2,
+    Sparkle, Trash2, Copy, Search, Play, Check, Share2,
     Calendar, AlertCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -96,11 +96,11 @@ export default function Dashboard() {
 
     return (
         <div className="space-y-8 pb-12">
-            {/* Top Header & Actions */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Top Header & Actions (Frosted Glass Container) */}
+            <div className="p-6 sm:p-7 rounded-3xl bg-white/80 backdrop-blur-2xl border border-white/90 shadow-sm ring-1 ring-white/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white">Meeting Hub</h1>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <h1 className="text-3xl font-black tracking-tight text-slate-900">Meeting Hub</h1>
+                    <p className="text-sm font-medium text-slate-600 mt-1">
                         Host HD sessions, join rooms, and review AI-generated action minutes.
                     </p>
                 </div>
@@ -131,7 +131,7 @@ export default function Dashboard() {
                                 </DialogHeader>
                                 <div className="space-y-4 py-4">
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Meeting Title</label>
+                                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Meeting Title</label>
                                         <Input
                                             required
                                             value={title}
@@ -140,7 +140,7 @@ export default function Dashboard() {
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Description</label>
+                                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Description</label>
                                         <Input
                                             value={desc}
                                             onChange={(e) => setDesc(e.target.value)}
@@ -148,7 +148,7 @@ export default function Dashboard() {
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Schedule Time (Optional)</label>
+                                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Schedule Time (Optional)</label>
                                         <Input
                                             type="datetime-local"
                                             value={scheduledDate}
@@ -156,10 +156,10 @@ export default function Dashboard() {
                                         />
                                     </div>
                                     <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Agenda Topics (One per line)</label>
+                                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Agenda Topics (One per line)</label>
                                         <textarea
                                             rows={3}
-                                            className="flex w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-2 text-sm text-slate-100 shadow-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:border-indigo-400/80 transition-all duration-200"
+                                            className="flex w-full rounded-2xl border border-slate-200/90 bg-white/90 px-4 py-2.5 text-sm text-slate-900 shadow-xs placeholder:text-slate-400 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 focus-visible:border-indigo-500 transition-all duration-200"
                                             value={agenda}
                                             onChange={(e) => setAgenda(e.target.value)}
                                             placeholder="1. Roadmap review&#10;2. Architecture updates&#10;3. Action items dispatch"
@@ -182,13 +182,13 @@ export default function Dashboard() {
 
             {/* Quick Join & Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <Card className="md:col-span-1 border-white/10 bg-gradient-to-br from-indigo-950/40 via-slate-900/80 to-purple-950/30">
+                <Card className="md:col-span-1">
                     <CardHeader className="pb-3">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <Video className="w-5 h-5 text-indigo-400" />
+                        <CardTitle className="text-base flex items-center gap-2 text-indigo-700">
+                            <Video className="w-5 h-5 text-indigo-600" />
                             Quick Room Entry
                         </CardTitle>
-                        <CardDescription>Enter a 9-digit room code or invite link</CardDescription>
+                        <CardDescription>Enter a room code or invite link</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleQuickJoin} className="space-y-3">
@@ -197,53 +197,53 @@ export default function Dashboard() {
                                 onChange={(e) => setJoinId(e.target.value)}
                                 placeholder="Enter Room ID (e.g. room-abc-123)"
                             />
-                            <Button type="submit" variant="secondary" className="w-full">
+                            <Button type="submit" variant="default" className="w-full">
                                 Join Room Now <ArrowRight className="w-4 h-4" />
                             </Button>
                         </form>
                     </CardContent>
                 </Card>
 
-                <Card className="border-white/10">
+                <Card>
                     <CardHeader className="pb-3">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-purple-400" />
+                        <CardTitle className="text-base flex items-center gap-2 text-purple-700">
+                            <Sparkle className="w-5 h-5 text-purple-600" />
                             AI Insights Status
                         </CardTitle>
                         <CardDescription>Automated meeting intelligence metrics</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-400">Total Transcribed:</span>
-                            <span className="font-semibold text-white">{meetings.length} Sessions</span>
+                            <span className="text-slate-600 font-medium">Total Transcribed:</span>
+                            <span className="font-bold text-slate-900">{meetings.length} Sessions</span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-400">Database Engine:</span>
+                            <span className="text-slate-600 font-medium">Database Engine:</span>
                             <Badge variant="cyan">Neon PostgreSQL</Badge>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                            <span className="text-slate-400">Auth Engine:</span>
+                            <span className="text-slate-600 font-medium">Auth Engine:</span>
                             <Badge variant="default">Better Auth</Badge>
                         </div>
                     </CardContent>
                 </Card>
 
-                <Card className="border-white/10">
+                <Card>
                     <CardHeader className="pb-3">
-                        <CardTitle className="text-base flex items-center gap-2">
-                            <CalendarDays className="w-5 h-5 text-emerald-400" />
+                        <CardTitle className="text-base flex items-center gap-2 text-emerald-700">
+                            <CalendarDays className="w-5 h-5 text-emerald-600" />
                             Upcoming Schedule
                         </CardTitle>
                         <CardDescription>Next sessions on your calendar</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="flex items-center justify-between">
-                            <div className="text-2xl font-bold text-white">
+                            <div className="text-3xl font-black text-slate-900">
                                 {meetings.filter((m: any) => m.status === 'scheduled').length}
                             </div>
                             <Badge variant="success">Active Agenda</Badge>
                         </div>
-                        <p className="text-xs text-slate-400 mt-2">
+                        <p className="text-xs text-slate-600 font-medium mt-2">
                             Invitations and reminders sent automatically via WebSockets.
                         </p>
                     </CardContent>
@@ -252,15 +252,15 @@ export default function Dashboard() {
 
             {/* Filter Tabs & Search Bar */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-                <div className="flex items-center gap-1.5 p-1 bg-slate-900/90 border border-white/10 rounded-xl backdrop-blur-md overflow-x-auto w-full sm:w-auto">
+                <div className="flex items-center gap-1.5 p-1 bg-white/80 border border-slate-200/80 rounded-2xl backdrop-blur-md shadow-xs overflow-x-auto w-full sm:w-auto">
                     {tabs.map((t) => (
                         <button
                             key={t.key}
                             onClick={() => setTab(t.key)}
-                            className={`px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                                 tab === t.key
-                                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-500/20'
-                                    : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+                                    ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white shadow-md shadow-indigo-500/20'
+                                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
                             }`}
                         >
                             {t.label}
@@ -290,12 +290,12 @@ export default function Dashboard() {
                     ))}
                 </div>
             ) : filteredMeetings.length === 0 ? (
-                <Card className="p-12 text-center border-dashed border-white/10">
-                    <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-4">
-                        <Video className="w-6 h-6 text-indigo-400" />
+                <Card className="p-12 text-center border-dashed border-slate-200">
+                    <div className="w-14 h-14 rounded-3xl bg-indigo-50 border border-indigo-200 flex items-center justify-center mx-auto mb-4 shadow-sm">
+                        <Video className="w-7 h-7 text-indigo-600" />
                     </div>
-                    <h3 className="text-lg font-semibold text-white mb-1">No Meetings Found</h3>
-                    <p className="text-sm text-slate-400 max-w-sm mx-auto mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 mb-1">No Meetings Found</h3>
+                    <p className="text-sm font-medium text-slate-600 max-w-sm mx-auto mb-6">
                         {searchQuery ? 'No meetings match your search query.' : 'Start your first instant meeting or schedule one for your team.'}
                     </p>
                     <Button variant="default" onClick={() => setShowCreate(true)}>
@@ -327,7 +327,7 @@ export default function Dashboard() {
                                         >
                                             {isActive ? '● Live Now' : isEnded ? 'Ended' : 'Scheduled'}
                                         </Badge>
-                                        <span className="text-xs text-slate-500 font-mono">
+                                        <span className="text-xs text-indigo-700 font-bold font-mono bg-indigo-50 px-2 py-0.5 rounded-md">
                                             #{meeting.roomId}
                                         </span>
                                     </div>
@@ -340,23 +340,23 @@ export default function Dashboard() {
                                 </CardHeader>
 
                                 <CardContent className="space-y-4 pt-0">
-                                    <div className="space-y-2 text-xs text-slate-400 bg-white/[0.02] p-3 rounded-xl border border-white/[0.04]">
+                                    <div className="space-y-2 text-xs text-slate-600 font-medium bg-slate-50/80 p-3.5 rounded-2xl border border-slate-200/60">
                                         <div className="flex items-center justify-between">
-                                            <span className="flex items-center gap-1.5">
-                                                <Clock className="w-3.5 h-3.5 text-slate-400" />
+                                            <span className="flex items-center gap-1.5 text-slate-500">
+                                                <Clock className="w-3.5 h-3.5" />
                                                 Created:
                                             </span>
-                                            <span className="text-slate-200">
+                                            <span className="text-slate-800 font-semibold">
                                                 {new Date(meeting.createdAt).toLocaleDateString()}
                                             </span>
                                         </div>
                                         {meeting.participants && (
                                             <div className="flex items-center justify-between">
-                                                <span className="flex items-center gap-1.5">
-                                                    <Users className="w-3.5 h-3.5 text-slate-400" />
+                                                <span className="flex items-center gap-1.5 text-slate-500">
+                                                    <Users className="w-3.5 h-3.5" />
                                                     Participants:
                                                 </span>
-                                                <span className="text-slate-200">
+                                                <span className="text-slate-800 font-semibold">
                                                     {meeting.participants.length} attended
                                                 </span>
                                             </div>
@@ -365,7 +365,7 @@ export default function Dashboard() {
 
                                     {meeting.agenda && Array.isArray(meeting.agenda) && meeting.agenda.length > 0 && (
                                         <div className="space-y-1">
-                                            <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                            <span className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                                                 Agenda ({meeting.agenda.length})
                                             </span>
                                             <div className="flex flex-wrap gap-1">
@@ -375,7 +375,7 @@ export default function Dashboard() {
                                                     </Badge>
                                                 ))}
                                                 {meeting.agenda.length > 2 && (
-                                                    <span className="text-[10px] text-slate-500">
+                                                    <span className="text-[10px] text-slate-500 font-semibold">
                                                         +{meeting.agenda.length - 2} more
                                                     </span>
                                                 )}
@@ -383,7 +383,7 @@ export default function Dashboard() {
                                         </div>
                                     )}
 
-                                    <div className="flex items-center gap-2 pt-2 border-t border-white/[0.06]">
+                                    <div className="flex items-center gap-2 pt-3 border-t border-slate-200/80">
                                         {isEnded ? (
                                             <Button
                                                 variant="secondary"
@@ -391,7 +391,7 @@ export default function Dashboard() {
                                                 className="w-full"
                                                 onClick={() => navigate(`/meetings/${meeting.id}/summary`)}
                                             >
-                                                <Sparkles className="w-3.5 h-3.5 mr-1 text-purple-400" />
+                                                <Sparkle className="w-3.5 h-3.5 mr-1 text-purple-600" />
                                                 View Summary
                                             </Button>
                                         ) : (
@@ -418,7 +418,7 @@ export default function Dashboard() {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="text-slate-400 hover:text-rose-400 hover:bg-rose-500/10"
+                                            className="text-slate-400 hover:text-rose-600 hover:bg-rose-50"
                                             onClick={() => {
                                                 if (confirm('Delete this meeting session?')) {
                                                     deleteMeeting.mutate(meeting.id);

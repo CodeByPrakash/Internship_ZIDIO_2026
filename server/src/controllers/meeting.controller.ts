@@ -303,7 +303,7 @@ export const joinMeeting = async (
         }
 
         const userId = req.user.userId;
-        const existingParticipant = meeting.participants.find((p) => p.userId === userId);
+        const existingParticipant = meeting.participants.find((p: { userId: string; }) => p.userId === userId);
 
         if (!existingParticipant) {
             await prisma.participant.create({

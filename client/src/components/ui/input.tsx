@@ -11,13 +11,13 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         if (icon) {
             return (
                 <div className="relative flex items-center w-full">
-                    <div className="absolute left-3.5 flex items-center pointer-events-none text-slate-400">
+                    <div className="absolute left-3.5 flex items-center pointer-events-none text-slate-500">
                         {icon}
                     </div>
                     <input
                         type={type}
                         className={cn(
-                            'flex h-11 w-full rounded-xl border border-white/10 bg-slate-900/80 pl-10 pr-4 py-2 text-sm text-slate-100 shadow-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:border-indigo-400/80 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50',
+                            'flex h-11 w-full rounded-xl border border-slate-200/90 bg-white/80 pl-10 pr-4 py-2 text-sm text-slate-900 shadow-xs placeholder:text-slate-400 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 focus-visible:border-indigo-500 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50',
                             className
                         )}
                         ref={ref}
@@ -31,7 +31,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             <input
                 type={type}
                 className={cn(
-                    'flex h-11 w-full rounded-xl border border-white/10 bg-slate-900/80 px-4 py-2 text-sm text-slate-100 shadow-sm placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:border-indigo-400/80 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50',
+                    'flex h-11 w-full rounded-xl border border-slate-200/90 bg-white/80 px-4 py-2 text-sm text-slate-900 shadow-xs placeholder:text-slate-400 focus-visible:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/25 focus-visible:border-indigo-500 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50',
                     className
                 )}
                 ref={ref}

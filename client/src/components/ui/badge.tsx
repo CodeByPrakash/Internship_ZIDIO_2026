@@ -3,24 +3,24 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '../../lib/utils';
 
 const badgeVariants = cva(
-    'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wider transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+    'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-bold uppercase tracking-wider transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 shadow-xs',
     {
         variants: {
             variant: {
                 default:
-                    'border-indigo-500/30 bg-indigo-500/15 text-indigo-300 hover:bg-indigo-500/25',
+                    'border-indigo-200 bg-indigo-50/90 text-indigo-700 hover:bg-indigo-100',
                 secondary:
-                    'border-white/10 bg-white/[0.06] text-slate-300 hover:bg-white/10',
+                    'border-slate-200 bg-slate-100/90 text-slate-700 hover:bg-slate-200/80',
                 destructive:
-                    'border-rose-500/30 bg-rose-500/15 text-rose-300 hover:bg-rose-500/25',
+                    'border-rose-200 bg-rose-50/90 text-rose-700 hover:bg-rose-100',
                 outline:
-                    'border-white/20 text-slate-300',
+                    'border-slate-300 text-slate-700 bg-white/60',
                 success:
-                    'border-emerald-500/30 bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25',
+                    'border-emerald-200 bg-emerald-50/90 text-emerald-800 hover:bg-emerald-100',
                 warning:
-                    'border-amber-500/30 bg-amber-500/15 text-amber-300 hover:bg-amber-500/25',
+                    'border-amber-200 bg-amber-50/90 text-amber-800 hover:bg-amber-100',
                 cyan:
-                    'border-cyan-500/30 bg-cyan-500/15 text-cyan-300 hover:bg-cyan-500/25',
+                    'border-sky-200 bg-sky-50/90 text-sky-800 hover:bg-sky-100',
             },
         },
         defaultVariants: {

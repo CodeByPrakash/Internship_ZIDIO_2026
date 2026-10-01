@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { 
-    Brain, CheckCircle, FileText, Clock, Sparkles, Download, 
+    Brain, CheckCircle, FileText, Clock, Sparkle, Download, 
     Copy, Share2, ArrowLeft, Check, Plus, User, Search, 
     Calendar, Video, Play, ExternalLink, CheckCircle2, Circle
 } from 'lucide-react';
@@ -11,7 +11,6 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs';
-import { Separator } from '../../components/ui/separator';
 
 interface ActionItem {
     id: string;
@@ -82,8 +81,8 @@ export default function MeetingSummary() {
 
     return (
         <div className="space-y-8 pb-12 max-w-5xl mx-auto">
-            {/* Navigation & Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            {/* Navigation & Header (Frosted Glass Container) */}
+            <div className="p-6 sm:p-7 rounded-3xl bg-white/80 backdrop-blur-2xl border border-white/90 shadow-sm ring-1 ring-white/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <Button variant="outline" size="icon" onClick={() => navigate('/dashboard')}>
                         <ArrowLeft className="w-4 h-4" />
@@ -91,14 +90,14 @@ export default function MeetingSummary() {
                     <div>
                         <div className="flex items-center gap-2">
                             <Badge variant="cyan">AI Summary Ready</Badge>
-                            <span className="text-xs text-slate-400">ID: #{id || 'meeting-901'}</span>
+                            <span className="text-xs font-semibold text-slate-500">ID: #{id || 'meeting-901'}</span>
                         </div>
-                        <h1 className="text-2xl font-bold text-white mt-1">{mockSummary.title}</h1>
+                        <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">{mockSummary.title}</h1>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2.5">
-                    <Button variant="secondary" size="sm" onClick={copySummary}>
+                    <Button variant="outline" size="sm" onClick={copySummary}>
                         <Copy className="w-4 h-4 mr-1.5" /> Copy Markdown
                     </Button>
                     <Button variant="default" size="sm" onClick={() => navigate('/workspaces')}>
@@ -108,23 +107,23 @@ export default function MeetingSummary() {
             </div>
 
             {/* Quick Metadata Bar */}
-            <Card className="border-white/10 bg-slate-900/60 p-4">
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+            <Card className="p-4">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-medium">
                     <div>
-                        <span className="text-slate-500 block mb-0.5 uppercase tracking-wider">Date</span>
-                        <span className="font-semibold text-slate-200">{mockSummary.date}</span>
+                        <span className="text-slate-500 block mb-0.5 uppercase tracking-wider font-bold">Date</span>
+                        <span className="font-bold text-slate-900">{mockSummary.date}</span>
                     </div>
                     <div>
-                        <span className="text-slate-500 block mb-0.5 uppercase tracking-wider">Duration</span>
-                        <span className="font-semibold text-slate-200">{mockSummary.duration}</span>
+                        <span className="text-slate-500 block mb-0.5 uppercase tracking-wider font-bold">Duration</span>
+                        <span className="font-bold text-slate-900">{mockSummary.duration}</span>
                     </div>
                     <div>
-                        <span className="text-slate-500 block mb-0.5 uppercase tracking-wider">Attendees</span>
-                        <span className="font-semibold text-slate-200">{mockSummary.attendees.length} members</span>
+                        <span className="text-slate-500 block mb-0.5 uppercase tracking-wider font-bold">Attendees</span>
+                        <span className="font-bold text-slate-900">{mockSummary.attendees.length} members</span>
                     </div>
                     <div>
-                        <span className="text-slate-500 block mb-0.5 uppercase tracking-wider">AI Accuracy</span>
-                        <span className="font-semibold text-emerald-400">99.4% (Whisper + GPT-4o)</span>
+                        <span className="text-slate-500 block mb-0.5 uppercase tracking-wider font-bold">AI Engine</span>
+                        <span className="font-bold text-emerald-700">99.4% (Whisper + GPT-4o)</span>
                     </div>
                 </div>
             </Card>
@@ -133,13 +132,13 @@ export default function MeetingSummary() {
             <Tabs defaultValue="summary" className="w-full">
                 <TabsList className="grid w-full grid-cols-3 max-w-md">
                     <TabsTrigger value="summary">
-                        <Sparkles className="w-3.5 h-3.5 mr-1.5 text-purple-400" /> Executive Summary
+                        <Sparkle className="w-3.5 h-3.5 mr-1.5 text-purple-600" /> Synopsis
                     </TabsTrigger>
                     <TabsTrigger value="actions">
-                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-emerald-400" /> Action Items ({actionItems.length})
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1.5 text-emerald-600" /> Actions ({actionItems.length})
                     </TabsTrigger>
                     <TabsTrigger value="transcript">
-                        <FileText className="w-3.5 h-3.5 mr-1.5 text-indigo-400" /> Transcript
+                        <FileText className="w-3.5 h-3.5 mr-1.5 text-indigo-600" /> Transcript
                     </TabsTrigger>
                 </TabsList>
 
@@ -147,8 +146,8 @@ export default function MeetingSummary() {
                 <TabsContent value="summary" className="space-y-6 pt-2">
                     <Card glow>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2 text-lg">
-                                <Brain className="w-5 h-5 text-indigo-400" />
+                            <CardTitle className="flex items-center gap-2 text-lg text-indigo-700">
+                                <Brain className="w-5 h-5 text-indigo-600" />
                                 Executive Synopsis
                             </CardTitle>
                             <CardDescription>
@@ -156,7 +155,7 @@ export default function MeetingSummary() {
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
-                            <p className="text-slate-300 leading-relaxed text-base">
+                            <p className="text-slate-700 leading-relaxed text-base font-medium">
                                 {mockSummary.summary}
                             </p>
                         </CardContent>
@@ -169,11 +168,11 @@ export default function MeetingSummary() {
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {mockSummary.keyDecisions.map((decision, i) => (
-                                <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                                    <div className="w-6 h-6 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
-                                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                                <div key={i} className="flex items-start gap-3 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/60">
+                                    <div className="w-6 h-6 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                                        <Check className="w-3.5 h-3.5 text-emerald-700 stroke-[3]" />
                                     </div>
-                                    <span className="text-sm text-slate-200 leading-normal">{decision}</span>
+                                    <span className="text-sm font-semibold text-slate-800 leading-normal">{decision}</span>
                                 </div>
                             ))}
                         </CardContent>
@@ -196,28 +195,28 @@ export default function MeetingSummary() {
                             {actionItems.map((item) => (
                                 <div
                                     key={item.id}
-                                    className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border transition-all ${
+                                    className={`flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-2xl border transition-all ${
                                         item.completed
-                                            ? 'bg-emerald-950/10 border-emerald-500/20 opacity-70'
-                                            : 'bg-slate-900/60 border-white/10 hover:border-indigo-500/30'
+                                            ? 'bg-emerald-50/50 border-emerald-200 opacity-70'
+                                            : 'bg-white/80 border-slate-200 hover:border-indigo-300 shadow-xs'
                                     }`}
                                 >
                                     <div className="flex items-start gap-3 mb-3 sm:mb-0">
                                         <button
                                             onClick={() => toggleActionItem(item.id)}
-                                            className="mt-0.5 text-slate-400 hover:text-emerald-400 transition-colors"
+                                            className="mt-0.5 text-slate-400 hover:text-emerald-600 transition-colors cursor-pointer"
                                         >
                                             {item.completed ? (
-                                                <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                                                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
                                             ) : (
-                                                <Circle className="w-5 h-5" />
+                                                <Circle className="w-5 h-5 text-slate-400" />
                                             )}
                                         </button>
                                         <div>
-                                            <p className={`text-sm font-medium ${item.completed ? 'line-through text-slate-400' : 'text-slate-100'}`}>
+                                            <p className={`text-sm font-bold ${item.completed ? 'line-through text-slate-400' : 'text-slate-900'}`}>
                                                 {item.text}
                                             </p>
-                                            <div className="flex items-center gap-3 text-xs text-slate-400 mt-1">
+                                            <div className="flex items-center gap-3 text-xs font-semibold text-slate-500 mt-1">
                                                 <span>👤 {item.assignee}</span>
                                                 <span>📅 {item.dueDate}</span>
                                             </div>
@@ -264,18 +263,18 @@ export default function MeetingSummary() {
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-3">
                             {filteredTranscript.map((t, idx) => (
-                                <div key={idx} className="p-3.5 rounded-xl bg-slate-950/60 border border-white/[0.06] space-y-1">
+                                <div key={idx} className="p-3.5 rounded-2xl bg-slate-50/80 border border-slate-200/60 space-y-1">
                                     <div className="flex items-center justify-between">
-                                        <span className="text-xs font-semibold text-indigo-300">
+                                        <span className="text-xs font-bold text-indigo-700">
                                             {t.speaker}
                                         </span>
-                                        <span className="text-xs font-mono text-slate-500">
+                                        <span className="text-xs font-mono font-semibold text-slate-400">
                                             {t.time}
                                         </span>
                                     </div>
-                                    <p className="text-sm text-slate-300 leading-relaxed">
+                                    <p className="text-sm text-slate-700 font-medium leading-relaxed">
                                         "{t.text}"
                                     </p>
                                 </div>

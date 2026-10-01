@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { 
     BarChart3, TrendingUp, Clock, Users, Video, Brain, 
-    Calendar, Download, Sparkles, CheckCircle, ArrowUpRight, 
+    Calendar, Download, Sparkle, CheckCircle, ArrowUpRight, 
     Zap, Shield
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
-import { Separator } from '../../components/ui/separator';
 
 export default function AnalyticsDashboard() {
     const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d'>('7d');
@@ -36,25 +35,25 @@ export default function AnalyticsDashboard() {
 
     return (
         <div className="space-y-8 pb-12 max-w-6xl mx-auto">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {/* Header (Frosted Glass Container) */}
+            <div className="p-6 sm:p-7 rounded-3xl bg-white/80 backdrop-blur-2xl border border-white/90 shadow-sm ring-1 ring-white/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white">Productivity & Analytics</h1>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <h1 className="text-3xl font-black tracking-tight text-slate-900">Productivity & Analytics</h1>
+                    <p className="text-sm font-medium text-slate-600 mt-1">
                         Enterprise intelligence on collaboration cadence, time savings, and follow-up efficiency.
                     </p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center p-1 bg-slate-900/90 border border-white/10 rounded-xl">
+                    <div className="flex items-center p-1 bg-white/90 border border-slate-200/80 rounded-2xl shadow-xs">
                         {(['7d', '30d', '90d'] as const).map((r) => (
                             <button
                                 key={r}
                                 onClick={() => setTimeRange(r)}
-                                className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
+                                className={`px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all cursor-pointer ${
                                     timeRange === r
-                                        ? 'bg-indigo-600 text-white shadow-sm'
-                                        : 'text-slate-400 hover:text-white'
+                                        ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white shadow-sm'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
                                 }`}
                             >
                                 {r.toUpperCase()}
@@ -62,7 +61,7 @@ export default function AnalyticsDashboard() {
                         ))}
                     </div>
 
-                    <Button variant="secondary" size="sm" onClick={exportReport}>
+                    <Button variant="outline" size="sm" onClick={exportReport}>
                         <Download className="w-4 h-4 mr-1.5" /> Export CSV
                     </Button>
                 </div>
@@ -75,21 +74,21 @@ export default function AnalyticsDashboard() {
                     return (
                         <Card key={idx} glow className="p-6 space-y-2">
                             <div className="flex items-center justify-between">
-                                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                                     {m.label}
                                 </span>
-                                <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
-                                    <Icon className="w-4 h-4 text-indigo-400" />
+                                <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-200 flex items-center justify-center shadow-xs">
+                                    <Icon className="w-4 h-4 text-indigo-600" />
                                 </div>
                             </div>
-                            <div className="text-3xl font-bold text-white tracking-tight">
+                            <div className="text-3xl font-black text-slate-900 tracking-tight">
                                 {m.value}
                             </div>
-                            <div className="flex items-center gap-1.5 text-xs">
+                            <div className="flex items-center gap-1.5 text-xs font-semibold">
                                 <Badge variant={m.positive ? 'success' : 'destructive'} className="py-0 px-1.5 text-[10px]">
                                     {m.change}
                                 </Badge>
-                                <span className="text-slate-500">vs prior period</span>
+                                <span className="text-slate-500 font-medium">vs prior period</span>
                             </div>
                         </Card>
                     );
@@ -110,16 +109,16 @@ export default function AnalyticsDashboard() {
                                 const heightPercent = (d.count / maxCount) * 100;
                                 return (
                                     <div key={i} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
-                                        <span className="text-xs font-mono text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span className="text-xs font-mono text-slate-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
                                             {d.count} ({d.duration})
                                         </span>
-                                        <div className="w-full max-w-[48px] bg-slate-800/80 rounded-xl overflow-hidden h-full flex items-end p-1">
+                                        <div className="w-full max-w-[48px] bg-slate-100/90 rounded-2xl overflow-hidden h-full flex items-end p-1 border border-slate-200/60 shadow-inner">
                                             <div
-                                                className="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-lg transition-all duration-500 group-hover:brightness-125"
+                                                className="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-xl transition-all duration-500 group-hover:brightness-110 shadow-xs"
                                                 style={{ height: `${heightPercent}%` }}
                                             />
                                         </div>
-                                        <span className="text-xs font-semibold text-slate-300">{d.day}</span>
+                                        <span className="text-xs font-bold text-slate-700">{d.day}</span>
                                     </div>
                                 );
                             })}
@@ -130,44 +129,44 @@ export default function AnalyticsDashboard() {
                 {/* AI ROI Breakdown */}
                 <Card className="flex flex-col justify-between">
                     <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-purple-400" />
+                        <CardTitle className="text-lg flex items-center gap-2 text-purple-700">
+                            <Sparkle className="w-5 h-5 text-purple-600" />
                             AI Efficiency ROI
                         </CardTitle>
                         <CardDescription>Estimated automated productivity return</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <div className="flex justify-between text-xs font-medium">
-                                <span className="text-slate-400">Note-taking Automation</span>
-                                <span className="text-white font-bold">100% automated</span>
+                            <div className="flex justify-between text-xs font-semibold">
+                                <span className="text-slate-600">Note-taking Automation</span>
+                                <span className="text-slate-900 font-bold">100% automated</span>
                             </div>
-                            <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                            <div className="w-full h-2.5 rounded-full bg-slate-100 border border-slate-200/60 overflow-hidden">
                                 <div className="h-full bg-indigo-500 w-full" />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <div className="flex justify-between text-xs font-medium">
-                                <span className="text-slate-400">Action Item Completion</span>
-                                <span className="text-emerald-400 font-bold">89% on-time</span>
+                            <div className="flex justify-between text-xs font-semibold">
+                                <span className="text-slate-600">Action Item Completion</span>
+                                <span className="text-emerald-600 font-bold">89% on-time</span>
                             </div>
-                            <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                            <div className="w-full h-2.5 rounded-full bg-slate-100 border border-slate-200/60 overflow-hidden">
                                 <div className="h-full bg-emerald-500 w-[89%]" />
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <div className="flex justify-between text-xs font-medium">
-                                <span className="text-slate-400">Meeting Follow-up Speed</span>
-                                <span className="text-purple-400 font-bold">4.2x faster</span>
+                            <div className="flex justify-between text-xs font-semibold">
+                                <span className="text-slate-600">Meeting Follow-up Speed</span>
+                                <span className="text-purple-600 font-bold">4.2x faster</span>
                             </div>
-                            <div className="w-full h-2 rounded-full bg-white/10 overflow-hidden">
+                            <div className="w-full h-2.5 rounded-full bg-slate-100 border border-slate-200/60 overflow-hidden">
                                 <div className="h-full bg-purple-500 w-[82%]" />
                             </div>
                         </div>
 
-                        <div className="p-3.5 rounded-xl bg-indigo-950/30 border border-indigo-500/20 text-xs text-indigo-300">
+                        <div className="p-4 rounded-2xl bg-indigo-50/80 border border-indigo-200/80 text-xs text-indigo-900 font-medium leading-relaxed shadow-xs">
                             💡 <strong>AI Insight:</strong> Teams using automatic Whisper minutes reduce follow-up clarification meetings by 3.5 hours per engineer every week.
                         </div>
                     </CardContent>

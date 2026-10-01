@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { 
     FolderKanban, Plus, MoreVertical, CheckCircle2, 
-    Clock, AlertCircle, Sparkles, Filter, Search, Trash2, 
+    Clock, AlertCircle, Sparkle, Filter, Search, Trash2, 
     ArrowRight, ChevronRight, User, Calendar
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -64,248 +64,266 @@ export default function KanbanBoard() {
 
         const newTask: Task = {
             id: Date.now().toString(),
-            title: newTaskTitle.trim(),
-            description: newTaskDesc.trim() || undefined,
+            title: newTaskTitle,
+            description: newTaskDesc || undefined,
             priority: newTaskPriority,
             assignee: newTaskAssignee,
             column: newTaskColumn,
-            dueDate: 'Next sprint',
+            dueDate: 'This Week',
         };
 
-        setTasks(prev => [newTask, ...prev]);
+        setTasks([...tasks, newTask]);
         setShowCreateModal(false);
         setNewTaskTitle('');
         setNewTaskDesc('');
-        toast.success(`Task "${newTask.title}" added to ${newTask.column}`);
+        toast.success('Task created successfully');
     };
 
     const moveTask = (taskId: string, targetColumn: Task['column']) => {
-        setTasks(prev => prev.map(t => t.id === taskId ? { ...t, column: targetColumn } : t));
+        setTasks(tasks.map(t => t.id === taskId ? { ...t, column: targetColumn } : t));
+        toast.success(`Task moved to ${targetColumn.replace('_', ' ').toUpperCase()}`);
     };
 
     const deleteTask = (taskId: string) => {
-        setTasks(prev => prev.filter(t => t.id !== taskId));
-        toast.success('Task removed');
+        setTasks(tasks.filter(t => t.id !== taskId));
+        toast.success('Task deleted');
     };
 
     const filteredTasks = tasks.filter(t => {
-        const matchesQuery = t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                             t.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                             t.assignee.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesSearch = t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase()));
         const matchesPriority = selectedPriority === 'all' || t.priority === selectedPriority;
-        return matchesQuery && matchesPriority;
+        return matchesSearch && matchesPriority;
     });
 
     const completionRate = Math.round((tasks.filter(t => t.column === 'done').length / (tasks.length || 1)) * 100);
 
     return (
-        <div className="space-y-8 pb-12">
-            {/* Header with Title & Sprint Progress */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <div className="flex items-center gap-2">
-                        <Badge variant="cyan">Active Sprint #4</Badge>
-                        <span className="text-xs text-slate-400">IntellMeet Core Workspace</span>
-                    </div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white mt-1">Project Kanban Board</h1>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <div className="hidden sm:flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-900/80 border border-white/10">
-                        <span className="text-xs text-slate-400">Sprint Progress:</span>
-                        <div className="w-24 h-2 rounded-full bg-white/10 overflow-hidden">
-                            <div 
-                                className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 transition-all duration-500" 
-                                style={{ width: `${completionRate}%` }} 
-                            />
+        <div className="space-y-6 pb-12">
+            {/* Top Control Panel */}
+            <div className="p-6 rounded-3xl bg-white/80 backdrop-blur-2xl border border-white/90 shadow-sm ring-1 ring-white/60 space-y-5">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <Badge variant="cyan">Active Sprint #4</Badge>
+                            <span className="text-xs font-bold text-slate-500">IntellMeet Core Workspace</span>
                         </div>
-                        <span className="text-xs font-bold text-emerald-400">{completionRate}%</span>
+                        <h1 className="text-3xl font-black tracking-tight text-slate-900 mt-1">Project Kanban Board</h1>
                     </div>
 
-                    <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-                        <DialogTrigger asChild>
-                            <Button variant="default">
-                                <Plus className="w-4 h-4 mr-1.5" /> Add Task
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[480px]">
-                            <form onSubmit={handleCreateTask}>
-                                <DialogHeader>
-                                    <DialogTitle>Create Sprint Task</DialogTitle>
-                                    <DialogDescription>
-                                        Add a task to the board or link it to a meeting decision.
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4 py-4">
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Title</label>
-                                        <Input
-                                            required
-                                            value={newTaskTitle}
-                                            onChange={(e) => setNewTaskTitle(e.target.value)}
-                                            placeholder="e.g. Implement WebSocket rate limiter"
-                                        />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Description</label>
-                                        <Input
-                                            value={newTaskDesc}
-                                            onChange={(e) => setNewTaskDesc(e.target.value)}
-                                            placeholder="Details, requirements, or meeting notes..."
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3">
+                    <div className="flex items-center gap-3">
+                        <div className="hidden sm:flex items-center gap-3 px-4 py-2 rounded-2xl bg-white/90 border border-slate-200/80 shadow-xs">
+                            <span className="text-xs font-bold text-slate-600">Sprint Progress:</span>
+                            <div className="w-28 h-2.5 rounded-full bg-slate-100 overflow-hidden border border-slate-200/60">
+                                <div 
+                                    className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 transition-all duration-500" 
+                                    style={{ width: `${completionRate}%` }} 
+                                />
+                            </div>
+                            <span className="text-xs font-black text-emerald-600">{completionRate}%</span>
+                        </div>
+
+                        <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+                            <DialogTrigger asChild>
+                                <Button variant="default" className="shadow-md shadow-indigo-500/25">
+                                    <Plus className="w-4 h-4 mr-1.5" /> Add Task
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[480px]">
+                                <form onSubmit={handleCreateTask}>
+                                    <DialogHeader>
+                                        <DialogTitle>Create Sprint Task</DialogTitle>
+                                        <DialogDescription>
+                                            Add a task to the board or link it to a meeting decision.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4 py-4">
                                         <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Priority</label>
-                                            <select
-                                                className="flex h-11 w-full rounded-xl border border-white/10 bg-slate-900/80 px-3 text-sm text-slate-100"
-                                                value={newTaskPriority}
-                                                onChange={(e) => setNewTaskPriority(e.target.value as any)}
-                                            >
-                                                <option value="low">Low</option>
-                                                <option value="medium">Medium</option>
-                                                <option value="high">High</option>
-                                                <option value="urgent">Urgent</option>
-                                            </select>
+                                            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Title</label>
+                                            <Input
+                                                required
+                                                value={newTaskTitle}
+                                                onChange={(e) => setNewTaskTitle(e.target.value)}
+                                                placeholder="e.g. Implement WebSocket rate limiter"
+                                            />
                                         </div>
                                         <div className="space-y-1.5">
-                                            <label className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Column</label>
-                                            <select
-                                                className="flex h-11 w-full rounded-xl border border-white/10 bg-slate-900/80 px-3 text-sm text-slate-100"
-                                                value={newTaskColumn}
-                                                onChange={(e) => setNewTaskColumn(e.target.value as any)}
-                                            >
-                                                <option value="todo">To Do</option>
-                                                <option value="in_progress">In Progress</option>
-                                                <option value="review">In Review</option>
-                                                <option value="done">Done</option>
-                                            </select>
+                                            <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Description</label>
+                                            <Input
+                                                value={newTaskDesc}
+                                                onChange={(e) => setNewTaskDesc(e.target.value)}
+                                                placeholder="Details, requirements, or meeting notes..."
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Priority</label>
+                                                <select
+                                                    className="flex h-11 w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
+                                                    value={newTaskPriority}
+                                                    onChange={(e) => setNewTaskPriority(e.target.value as any)}
+                                                >
+                                                    <option value="low">Low</option>
+                                                    <option value="medium">Medium</option>
+                                                    <option value="high">High</option>
+                                                    <option value="urgent">Urgent</option>
+                                                </select>
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Column</label>
+                                                <select
+                                                    className="flex h-11 w-full rounded-xl border border-slate-200/80 bg-white/90 px-3 text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500/25"
+                                                    value={newTaskColumn}
+                                                    onChange={(e) => setNewTaskColumn(e.target.value as any)}
+                                                >
+                                                    <option value="todo">To Do</option>
+                                                    <option value="in_progress">In Progress</option>
+                                                    <option value="review">In Review</option>
+                                                    <option value="done">Done</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <DialogFooter>
-                                    <Button type="button" variant="ghost" onClick={() => setShowCreateModal(false)}>
-                                        Cancel
-                                    </Button>
-                                    <Button type="submit">
-                                        Create Task
-                                    </Button>
-                                </DialogFooter>
-                            </form>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-            </div>
-
-            {/* Filter and Search Bar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto">
-                    {['all', 'urgent', 'high', 'medium', 'low'].map((p) => (
-                        <Button
-                            key={p}
-                            variant={selectedPriority === p ? 'secondary' : 'ghost'}
-                            size="sm"
-                            onClick={() => setSelectedPriority(p)}
-                            className="capitalize"
-                        >
-                            {p === 'all' ? 'All Priorities' : p}
-                        </Button>
-                    ))}
+                                    <DialogFooter>
+                                        <Button type="button" variant="ghost" onClick={() => setShowCreateModal(false)}>
+                                            Cancel
+                                        </Button>
+                                        <Button type="submit">
+                                            Create Task
+                                        </Button>
+                                    </DialogFooter>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
                 </div>
 
-                <div className="w-full sm:w-72">
-                    <Input
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Search tasks..."
-                        icon={<Search className="w-4 h-4" />}
-                    />
+                {/* Filter and Search Bar */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-1">
+                    <div className="flex items-center gap-1.5 p-1 bg-slate-100/80 border border-slate-200/80 rounded-2xl overflow-x-auto w-full sm:w-auto">
+                        {['all', 'urgent', 'high', 'medium', 'low'].map((p) => (
+                            <button
+                                key={p}
+                                onClick={() => setSelectedPriority(p)}
+                                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all capitalize cursor-pointer ${
+                                    selectedPriority === p
+                                        ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-600 text-white shadow-sm'
+                                        : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
+                                }`}
+                            >
+                                {p === 'all' ? 'All Priorities' : p}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="w-full sm:w-80">
+                        <Input
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            placeholder="Search tasks or descriptions..."
+                            icon={<Search className="w-4 h-4" />}
+                        />
+                    </div>
                 </div>
             </div>
 
             {/* 4-Column Kanban Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 items-start">
                 {columns.map((col) => {
                     const colTasks = filteredTasks.filter(t => t.column === col.key);
 
                     return (
-                        <div key={col.key} className="flex flex-col space-y-3">
-                            <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900/80 border border-white/10">
-                                <div className="flex items-center gap-2">
-                                    <Badge variant={col.badgeVariant}>
-                                        {col.label}
-                                    </Badge>
-                                </div>
-                                <span className="text-xs font-semibold text-slate-400">
+                        <div 
+                            key={col.key} 
+                            className="flex flex-col space-y-3 p-3.5 rounded-3xl bg-white/70 backdrop-blur-xl border border-white/90 shadow-sm ring-1 ring-white/60 min-h-[500px]"
+                        >
+                            {/* Column Header */}
+                            <div className="flex items-center justify-between p-3 rounded-2xl bg-white/90 border border-slate-200/80 shadow-xs">
+                                <Badge variant={col.badgeVariant}>
+                                    {col.label}
+                                </Badge>
+                                <span className="text-xs font-black text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full">
                                     {colTasks.length}
                                 </span>
                             </div>
 
-                            <div className="space-y-3 min-h-[400px]">
-                                {colTasks.map((task) => (
-                                    <Card
-                                        key={task.id}
-                                        glow
-                                        className="p-4 space-y-3 bg-slate-900/90"
-                                    >
-                                        <div className="flex items-start justify-between gap-2">
-                                            <Badge variant={getPriorityVariant(task.priority)} className="text-[10px]">
-                                                {task.priority}
-                                            </Badge>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-6 w-6 text-slate-400 hover:text-rose-400"
-                                                onClick={() => deleteTask(task.id)}
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </Button>
-                                        </div>
-
-                                        <h4 className="text-sm font-semibold text-white leading-snug">
-                                            {task.title}
-                                        </h4>
-
-                                        {task.description && (
-                                            <p className="text-xs text-slate-400 line-clamp-2">
-                                                {task.description}
-                                            </p>
-                                        )}
-
-                                        {task.meetingRef && (
-                                            <div className="flex items-center gap-1 text-[11px] text-purple-300 bg-purple-500/10 px-2 py-0.5 rounded-md border border-purple-500/20">
-                                                <Sparkles className="w-3 h-3" />
-                                                From: {task.meetingRef}
-                                            </div>
-                                        )}
-
-                                        <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/[0.06]">
-                                            <span className="flex items-center gap-1">
-                                                <User className="w-3 h-3 text-slate-500" />
-                                                {task.assignee}
-                                            </span>
-                                            <span>{task.dueDate}</span>
-                                        </div>
-
-                                        {/* Status Movement Pills */}
-                                        <div className="grid grid-cols-4 gap-1 pt-1">
-                                            {columns.map(c => (
-                                                <button
-                                                    key={c.key}
-                                                    disabled={task.column === c.key}
-                                                    onClick={() => moveTask(task.id, c.key)}
-                                                    className={`py-1 text-[10px] rounded transition-all ${
-                                                        task.column === c.key
-                                                            ? 'bg-indigo-600/30 text-indigo-300 font-bold border border-indigo-500/40 cursor-default'
-                                                            : 'bg-white/[0.03] hover:bg-white/[0.08] text-slate-400'
-                                                    }`}
+                            {/* Task Cards Stack */}
+                            <div className="space-y-3 flex-1">
+                                {colTasks.length === 0 ? (
+                                    <div className="h-32 rounded-2xl border-2 border-dashed border-slate-200/80 flex items-center justify-center text-xs font-semibold text-slate-400">
+                                        No tasks in this lane
+                                    </div>
+                                ) : (
+                                    colTasks.map((task) => (
+                                        <div
+                                            key={task.id}
+                                            className="p-4 rounded-2xl bg-white/95 border border-slate-200/90 shadow-xs hover:shadow-md hover:border-indigo-300 transition-all space-y-3"
+                                        >
+                                            <div className="flex items-start justify-between gap-2">
+                                                <Badge variant={getPriorityVariant(task.priority)} className="text-[10px]">
+                                                    {task.priority}
+                                                </Badge>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-6 w-6 text-slate-400 hover:text-rose-600 hover:bg-rose-50"
+                                                    onClick={() => deleteTask(task.id)}
                                                 >
-                                                    {c.label.slice(0, 3)}
-                                                </button>
-                                            ))}
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </Button>
+                                            </div>
+
+                                            <h4 className="text-sm font-bold text-slate-900 leading-snug">
+                                                {task.title}
+                                            </h4>
+
+                                            {task.description && (
+                                                <p className="text-xs text-slate-600 font-medium line-clamp-2 leading-relaxed">
+                                                    {task.description}
+                                                </p>
+                                            )}
+
+                                            {task.meetingRef && (
+                                                <div className="flex items-center gap-1.5 text-[11px] font-bold text-purple-700 bg-purple-50 px-2.5 py-1 rounded-xl border border-purple-200/60">
+                                                    <Sparkle className="w-3 h-3 text-purple-600" />
+                                                    <span>From: {task.meetingRef}</span>
+                                                </div>
+                                            )}
+
+                                            <div className="flex items-center justify-between text-xs text-slate-500 font-medium pt-2 border-t border-slate-100">
+                                                <span className="flex items-center gap-1.5">
+                                                    <User className="w-3.5 h-3.5 text-slate-400" />
+                                                    <span className="font-semibold text-slate-700">{task.assignee}</span>
+                                                </span>
+                                                <span className="font-semibold text-slate-500">{task.dueDate}</span>
+                                            </div>
+
+                                            {/* Status Movement Pills */}
+                                            <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1">
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Move:</span>
+                                                <div className="flex items-center gap-1 flex-wrap justify-end">
+                                                    {columns.map(c => {
+                                                        const isCurrent = task.column === c.key;
+                                                        return (
+                                                            <button
+                                                                key={c.key}
+                                                                disabled={isCurrent}
+                                                                onClick={() => moveTask(task.id, c.key)}
+                                                                className={`px-2 py-0.5 text-[10px] font-bold rounded-lg transition-all cursor-pointer ${
+                                                                    isCurrent
+                                                                        ? 'bg-indigo-600 text-white shadow-xs'
+                                                                        : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                                                                }`}
+                                                            >
+                                                                {c.label}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
                                         </div>
-                                    </Card>
-                                ))}
+                                    ))
+                                )}
                             </div>
                         </div>
                     );
