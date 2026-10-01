@@ -1,9 +1,12 @@
 import axios from 'axios';
 import { useAuthStore } from '../store/auth.store';
 
-const API_BASE = import.meta.env.VITE_API_URL
-    ? `${import.meta.env.VITE_API_URL}/api`
-    : '/api';
+const DEFAULT_BACKEND = import.meta.env.PROD
+    ? 'https://internship-zidio-2026.onrender.com'
+    : '';
+
+const BACKEND_URL = import.meta.env.VITE_API_URL || DEFAULT_BACKEND;
+const API_BASE = BACKEND_URL ? `${BACKEND_URL}/api` : '/api';
 
 const api = axios.create({
     baseURL: API_BASE,

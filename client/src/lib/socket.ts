@@ -3,7 +3,11 @@ import { useAuthStore } from '../store/auth.store';
 
 const getToken = () => useAuthStore.getState().accessToken || '';
 
-const BASE_URL = import.meta.env.VITE_API_URL || window.location.origin;
+const DEFAULT_BACKEND = import.meta.env.PROD
+    ? 'https://internship-zidio-2026.onrender.com'
+    : window.location.origin;
+
+const BASE_URL = import.meta.env.VITE_API_URL || DEFAULT_BACKEND;
 
 export const meetingSocket: Socket = io(`${BASE_URL}/meeting`, {
     autoConnect: false,
