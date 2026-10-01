@@ -1,0 +1,86 @@
+@import "tailwindcss";
+
+/* ─── Theme Tokens (Tailwind v4 @theme) ─────────────────────────────── */
+@theme {
+  --color-primary: #6366f1;
+  --color-primary-dark: #4f46e5;
+  --color-primary-light: #818cf8;
+  --color-secondary: #8b5cf6;
+  --color-secondary-light: #a78bfa;
+  --color-accent: #0ea5e9;
+  --color-accent-emerald: #10b981;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
+  --color-surface: #11152c;
+  --color-surface-2: #161b38;
+  --color-surface-3: #1f254e;
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ─── Base Layer ────────────────────────────────────────────────────── */
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  #root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.35); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.65); }
+}
+
+/* ─── Custom Components & Utilities ─────────────────────────────────── */
+@layer components {
+  .glow-ambient-bg {
+    position: absolute;
+    width: 550px;
+    height: 550px;
+    border-radius: 50%;
+    filter: blur(140px);
+    pointer-events: none;
+    opacity: 0.35;
+    z-index: 0;
+  }
+
+  .glow-primary {
+    background: radial-gradient(circle, #6366f1 0%, transparent 70%);
+  }
+
+  .glow-secondary {
+    background: radial-gradient(circle, #8b5cf6 0%, transparent 70%);
+  }
+
+  .glow-accent {
+    background: radial-gradient(circle, #0ea5e9 0%, transparent 70%);
+  }
+
+  .audio-bar {
+    display: inline-block;
+    width: 3px;
+    border-radius: 2px;
+    background: var(--color-accent-emerald);
+    animation: wave 1.2s ease-in-out infinite;
+  }
+}
+
+/* ─── Animations ────────────────────────────────────────────────────── */
+@keyframes wave {
+  0% { transform: scaleY(0.4); }
+  50% { transform: scaleY(1); }
+  100% { transform: scaleY(0.4); }
+}
