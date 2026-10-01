@@ -86,11 +86,15 @@ const io = createSocketServer(httpServer);
 // ─── Startup Sequence ────────────────────────────────────────────────────────
 
 const startServer = async () => {
-    // 1. Connect Neon PostgreSQL
-    await connectDB();
+    try {
+        // 1. Connect Neon PostgreSQL
+        await connectDB();
 
-    // 2. Connect Redis (optional caching / scaling)
-    await connectRedis();
+        // 2. Connect Redis (optional caching / scaling)
+        await connectRedis();
+    } catch (err) {
+        logger.warn(`Startup initialization warning: ${err}`);
+    }
 
     // 3. Start HTTP Server (in standalone Node.js environments)
     if (!process.env.VERCEL) {
