@@ -8,7 +8,7 @@ export const auth = betterAuth({
         provider: 'postgresql',
     }),
     secret: env.JWT_SECRET || 'better-auth-secret-key-at-least-32-chars-long',
-    baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:5000',
+    baseURL: process.env.BETTER_AUTH_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://zidio-intership-backend.vercel.app'),
     basePath: '/api/auth',
     emailAndPassword: {
         enabled: true,
@@ -31,7 +31,14 @@ export const auth = betterAuth({
             },
         },
     },
-    trustedOrigins: [env.CLIENT_URL || 'http://localhost:5173', 'http://localhost:5000'],
+    trustedOrigins: [
+        env.CLIENT_URL,
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'http://localhost:5000',
+        'https://internship-zidio-2026-client.vercel.app',
+        'https://zidio-intership-backend.vercel.app',
+    ],
 });
 
 export type Auth = typeof auth;

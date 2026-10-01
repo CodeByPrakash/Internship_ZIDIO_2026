@@ -27,17 +27,43 @@ import { auth } from './config/auth';
 
 const app = express();
 
+const allowedOrigins = [
+    env.CLIENT_URL,
+    'http://localhost:5173',
+    'http://localhost:3000',
+    'http://localhost:5000',
+    'https://internship-zidio-2026-client.vercel.app',
+    'https://zidio-intership-backend.vercel.app',
+];
+
+const corsOptions: cors.CorsOptions = {
+    origin: (origin, callback) => {
+        if (!origin) return callback(null, true);
+        if (
+            allowedOrigins.includes(origin) ||
+            origin.endsWith('.vercel.app') ||
+            origin.includes('localhost')
+        ) {
+            return callback(null, true);
+        }
+        return callback(null, true);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'X-Requested-With', 'Accept'],
+    exposedHeaders: ['Set-Cookie'],
+};
+
 // ─── Security Middleware ──────────────────────────────────────────────────────
 
-app.use(helmet());
 app.use(
-    cors({
-        origin: env.CLIENT_URL,
-        credentials: true,
-        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
+    helmet({
+        crossOriginResourcePolicy: false,
     })
 );
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
 
 // ─── Better Auth Native Handler (Mounted before express.json body parser) ─────
 
