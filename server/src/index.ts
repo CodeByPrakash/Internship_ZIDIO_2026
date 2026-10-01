@@ -76,17 +76,22 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser(env.COOKIE_SECRET));
 app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 
-// ─── Health Check ─────────────────────────────────────────────────────────────
+// ─── Health & Root Checks ───────────────────────────────────────────────────
 
-app.get('/health', (_req, res) => {
+app.get(['/', '/health', '/api/health'], (_req, res) => {
     res.status(200).json({
         status: 'ok',
         environment: env.NODE_ENV,
         timestamp: new Date().toISOString(),
-        service: 'IntellMeet API',
+        service: 'IntellMeet Backend API',
         version: '1.0.0',
     });
 });
+
+app.get('/favicon.ico', (_req, res) => {
+    res.status(204).end();
+});
+
 
 // ─── REST API Routes ──────────────────────────────────────────────────────────
 
