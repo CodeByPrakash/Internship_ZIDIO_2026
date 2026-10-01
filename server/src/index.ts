@@ -92,27 +92,35 @@ const startServer = async () => {
     // 2. Connect Redis (optional caching / scaling)
     await connectRedis();
 
-    // 3. Start HTTP Server
-    httpServer.listen(env.PORT, () => {
-        logger.info(`🚀 IntellMeet Server running on port ${env.PORT} [${env.NODE_ENV}]`);
-        logger.info(`📡 API: http://localhost:${env.PORT}/api`);
-        logger.info(`🔌 WebSocket: ws://localhost:${env.PORT}`);
-        logger.info(`❤️  Health: http://localhost:${env.PORT}/health`);
-    });
+    // 3. Start HTTP Server (in standalone Node.js environments)
+    if (!process.env.VERCEL) {
+        httpServer.listen(env.PORT, () => {
+            logger.info(`🚀 IntellMeet Server running on port ${env.PORT} [${env.NODE_ENV}]`);
+            logger.info(`📡 API: http://localhost:${env.PORT}/api`);
+            logger.info(`🔌 WebSocket: ws://localhost:${env.PORT}`);
+            logger.info(`❤️  Health: http://localhost:${env.PORT}/health`);
+        });
+    }
 };
 
 // Handle unhandled rejections
 process.on('unhandledRejection', (err: Error) => {
     logger.error(`Unhandled Rejection: ${err.message}`);
-    httpServer.close(() => process.exit(1));
+    if (!process.env.VERCEL) {
+        httpServer.close(() => process.exit(1));
+    }
 });
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err: Error) => {
     logger.error(`Uncaught Exception: ${err.message}`);
-    process.exit(1);
+    if (!process.env.VERCEL) {
+        process.exit(1);
+    }
 });
 
 startServer();
 
-export { app, io };
+export { app, io, httpServer };
+export default app;
+
